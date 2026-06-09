@@ -12,10 +12,12 @@ export { Card } from "./ui/Card";
 export { Modal } from "./ui/Modal";
 export { Input } from "./ui/Input";
 export { Badge } from "./ui/Badge";
+export { Toast } from "./ui/Toast";
+export { NotificationContainer } from "./ui/NotificationContainer";
+export { ErrorDisplay } from "./ui/ErrorDisplay";
 
 // Forms
-export { FormField } from "./forms/FormField";
-export { FormError } from "./forms/FormError";
+export { FormField, FormError } from "./forms/FormField";
 
 // Loading
 export { Skeleton } from "./loading/Skeleton";

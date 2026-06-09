@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { ErrorProvider } from "@/context/ErrorContext";
+import { NotificationProvider } from "@/context/NotificationContext";
+import { NotificationContainer } from "@/components/ui/NotificationContainer";
+import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -17,9 +21,15 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ThemeProvider>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <ErrorProvider>
+            <NotificationProvider>
+              <AuthProvider>
+                {children}
+                <NotificationContainer />
+                <ErrorDisplay />
+              </AuthProvider>
+            </NotificationProvider>
+          </ErrorProvider>
         </ThemeProvider>
       </body>
     </html>

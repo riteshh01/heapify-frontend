@@ -3,7 +3,7 @@
  * Handles authentication, error handling, and common configurations
  */
 
-import { ApiResponse, ApiError } from "@/types";
+import { ApiResponse } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
@@ -174,4 +174,44 @@ export async function deleteRequest<T>(
   options?: FetchOptions
 ): Promise<T> {
   return apiCall<T>(endpoint, { ...options, method: "DELETE" });
+}
+
+/**
+ * Get user-friendly error message from API error
+ * Provides better error messages for different scenarios
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    // Common API error status codes
+    switch (error.status) {
+      case 400:
+        return "Invalid request. Please check your input.";
+      case 401:
+        return "Unauthorized. Please log in again.";
+      case 403:
+        return "You don't have permission to do this.";
+      case 404:
+        return "Resource not found.";
+      case 409:
+        return "Conflict. This resource already exists.";
+      case 429:
+        return "Too many requests. Please try again later.";
+      case 500:
+        return "Server error. Please try again later.";
+      case 503:
+        return "Service unavailable. Please try again later.";
+      default:
+        return error.message || "An error occurred";
+    }
+  }
+
+  if (error instanceof TypeError) {
+    return "Network error. Please check your connection.";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return "An unexpected error occurred";
 }
