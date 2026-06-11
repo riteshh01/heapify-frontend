@@ -31,9 +31,35 @@ interface AuthContextType {
   setOtpExpiry: (expiry: string) => void;
   setOtpCooldown: (cooldown: number) => void;
   getUserData: () => Promise<void>;
+  saveUserToStorage: (user: User) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** Safely read a JSON value from localStorage */
+function readStorage<T>(key: string): T | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Safely write a JSON value to localStorage */
+function writeStorage(key: string, value: unknown): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {}
+}
+
+/** Safely remove a key from localStorage */
+function removeStorage(key: string): void {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -46,29 +72,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [otpExpiry, setOtpExpiry] = useState<string | null>(null);
   const [otpCooldown, setOtpCooldown] = useState(0);
 
-  // Initialize auth from localStorage on mount
+  // ── Save user to localStorage (called from login page after successful login) ──
+  const saveUserToStorage = useCallback((userData: User) => {
+    writeStorage("authUser", userData);
+    writeStorage("authLoggedIn", true);
+  }, []);
+
+  // ── Initialize auth from localStorage on mount ─────────────────────────────
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        const storedSession = localStorage.getItem("authSession");
+        // First restore from localStorage immediately (no flicker)
+        const storedLoggedIn = localStorage.getItem("authLoggedIn");
+        const storedUser = readStorage<User>("authUser");
+
+        if (storedLoggedIn === "true" && storedUser) {
+          setUser(storedUser);
+          setIsLoggedIn(true);
+        }
+
+        // Also try the legacy authSession format
+        const storedSession = readStorage<AuthSession>("authSession");
         if (storedSession) {
-          const parsedSession = JSON.parse(storedSession) as AuthSession;
-          // Verify token is still valid
-          if (new Date(parsedSession.expiresAt) > new Date()) {
-            setSession(parsedSession);
-            setUser(parsedSession.user);
-            setIsLoggedIn(true);
-            setAuthToken(parsedSession.token);
+          if (new Date(storedSession.expiresAt) > new Date()) {
+            setSession(storedSession);
+            if (!storedUser) {
+              setUser(storedSession.user);
+              setIsLoggedIn(true);
+            }
+            setAuthToken(storedSession.token);
           } else {
-            // Token expired, clear session
-            localStorage.removeItem("authSession");
+            removeStorage("authSession");
             clearAuthToken();
-            setIsLoggedIn(false);
           }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
-        localStorage.removeItem("authSession");
+        removeStorage("authSession");
+        removeStorage("authUser");
+        removeStorage("authLoggedIn");
         clearAuthToken();
         setIsLoggedIn(false);
       } finally {
@@ -87,7 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // setUser(response.user);
       // setIsLoggedIn(true);
       // setAuthToken(response.token);
-      // localStorage.setItem("authSession", JSON.stringify(response));
+      // writeStorage("authSession", response);
+      // saveUserToStorage(response.user);
     },
     []
   );
@@ -104,7 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // setUser(response.user);
       // setIsLoggedIn(true);
       // setAuthToken(response.token);
-      // localStorage.setItem("authSession", JSON.stringify(response));
+      // writeStorage("authSession", response);
+      // saveUserToStorage(response.user);
     },
     []
   );
@@ -114,7 +158,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSession(null);
     setIsLoggedIn(false);
     clearAuthToken();
-    localStorage.removeItem("authSession");
+    removeStorage("authSession");
+    removeStorage("authUser");
+    removeStorage("authLoggedIn");
     // TODO: Call logout endpoint
   }, []);
 
@@ -130,13 +176,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         if (data.data?.user) {
-          setUser(data.data.user);
+          const userData = data.data.user as User;
+          setUser(userData);
+          // Persist user data so refresh keeps the session alive
+          saveUserToStorage(userData);
         }
       }
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
-  }, []);
+  }, [saveUserToStorage]);
 
   const value: AuthContextType = {
     user,
@@ -160,6 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOtpExpiry,
     setOtpCooldown,
     getUserData,
+    saveUserToStorage,
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Error Display Component
+ * Error Display Component — 2010s design system
  * Shows global errors in a dedicated area
  */
 
@@ -17,17 +17,17 @@ export function ErrorDisplay() {
       {errors.map((error) => (
         <div
           key={error.id}
-          className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 shadow-md animate-in slide-in-from-bottom text-red-800"
+          className="flex items-start gap-3 rounded-xl border border-red-300 dark:border-red-500/30 bg-[#fee2e2] dark:bg-[#7f1d1d]/50 px-4 py-3 shadow-md text-[#991b1b] dark:text-[#f87171] transition-colors duration-300"
           role="alert"
         >
           {/* Icon */}
-          <div className="flex-shrink-0 text-lg font-bold text-red-600 mt-0.5">
+          <div className="flex-shrink-0 text-lg font-bold text-red-600 dark:text-red-400 mt-0.5">
             ✕
           </div>
 
           {/* Content */}
           <div className="flex-1">
-            <p className="font-semibold">Error</p>
+            <p className="font-bold">Error</p>
             <p className="mt-1 text-sm opacity-90">{error.message}</p>
             {error.code && (
               <p className="mt-1 text-xs opacity-75">Code: {error.code}</p>

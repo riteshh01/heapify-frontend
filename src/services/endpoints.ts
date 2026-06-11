@@ -16,6 +16,17 @@ export const AUTH_ENDPOINTS = {
   ME: "/auth/me",
 } as const;
 
+// ===== KNOWLEDGE / DSA ENDPOINTS =====
+export const KNOWLEDGE_ENDPOINTS = {
+  TOPICS:           "/knowledge/topics",
+  TOPIC_DATA:       (topicId: string | number) => `/knowledge/topics/${topicId}`,
+  PATTERNS:         (topicId: string | number) => `/knowledge/patterns/${topicId}`,
+  PROBLEMS:         (patternId: string | number) => `/knowledge/problems/${patternId}`,
+  PROGRESS:         "/knowledge/progress",
+  TOGGLE_PROGRESS:  "/knowledge/progress/toggle",
+} as const;
+
+
 // ===== LEARNING ENDPOINTS =====
 export const LEARNING_ENDPOINTS = {
   // Paths

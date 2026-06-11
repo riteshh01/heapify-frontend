@@ -1,5 +1,5 @@
 /**
- * Toast/Notification Component
+ * Toast/Notification Component — 2010s design system
  * Individual toast notification display
  */
 
@@ -30,36 +30,36 @@ export function Toast({ notification, onClose }: ToastProps) {
   const getStyles = () => {
     switch (notification.type) {
       case "success":
-        return "bg-green-50 border-green-200 text-green-800";
+        return "bg-[#dcfce7] dark:bg-[#064e3b]/60 border-[#bbf7d0] dark:border-[#047857] text-[#166534] dark:text-[#34d399]";
       case "error":
-        return "bg-red-50 border-red-200 text-red-800";
+        return "bg-[#fee2e2] dark:bg-[#7f1d1d]/60 border-[#fecaca] dark:border-[#b91c1c] text-[#991b1b] dark:text-[#f87171]";
       case "warning":
-        return "bg-yellow-50 border-yellow-200 text-yellow-800";
+        return "bg-[#fef9c3] dark:bg-[#78350f]/60 border-[#fef08a] dark:border-[#b45309] text-[#854d0e] dark:text-[#fbbf24]";
       case "info":
-        return "bg-blue-50 border-blue-200 text-blue-800";
+        return "bg-blue-50 dark:bg-blue-900/60 border-blue-200 dark:border-blue-500/30 text-[#3b5998] dark:text-[#7dd3fc]";
       default:
-        return "bg-gray-50 border-gray-200 text-gray-800";
+        return "bg-[#e2e8f0] dark:bg-[#334155] border-[#cbd5e1] dark:border-[#475569] text-[#475569] dark:text-[#cbd5e1]";
     }
   };
 
   const getIconColor = () => {
     switch (notification.type) {
       case "success":
-        return "text-green-600";
+        return "text-[#166534] dark:text-[#34d399]";
       case "error":
-        return "text-red-600";
+        return "text-[#991b1b] dark:text-[#f87171]";
       case "warning":
-        return "text-yellow-600";
+        return "text-[#854d0e] dark:text-[#fbbf24]";
       case "info":
-        return "text-blue-600";
+        return "text-[#3b5998] dark:text-[#7dd3fc]";
       default:
-        return "text-gray-600";
+        return "text-[#475569] dark:text-[#cbd5e1]";
     }
   };
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border px-4 py-3 shadow-md animate-in slide-in-from-top ${getStyles()}`}
+      className={`flex items-start gap-3 rounded-xl border px-4 py-3 shadow-md transition-colors duration-300 ${getStyles()}`}
       role="alert"
     >
       {/* Icon */}
@@ -69,7 +69,7 @@ export function Toast({ notification, onClose }: ToastProps) {
 
       {/* Content */}
       <div className="flex-1">
-        <p className="font-semibold">{notification.title}</p>
+        <p className="font-bold">{notification.title}</p>
         {notification.message && (
           <p className="mt-1 text-sm opacity-90">{notification.message}</p>
         )}
@@ -78,7 +78,7 @@ export function Toast({ notification, onClose }: ToastProps) {
         {notification.action && (
           <button
             onClick={notification.action.onClick}
-            className="mt-2 text-sm font-medium underline hover:opacity-75"
+            className="mt-2 text-sm font-bold underline hover:opacity-75"
           >
             {notification.action.label}
           </button>
@@ -88,7 +88,7 @@ export function Toast({ notification, onClose }: ToastProps) {
       {/* Close Button */}
       <button
         onClick={() => onClose(notification.id)}
-        className="flex-shrink-0 text-lg opacity-60 hover:opacity-100 transition-opacity"
+        className="flex-shrink-0 text-lg opacity-60 hover:opacity-100 transition-opacity font-bold"
         aria-label="Close notification"
       >
         ✕

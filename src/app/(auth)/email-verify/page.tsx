@@ -122,81 +122,79 @@ export default function EmailVerifyPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-emerald-500/10 rounded-full border border-emerald-500/30 mb-4">
-              <svg
-                className="w-8 h-8 text-emerald-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-2">Verify Your Email</h1>
-            <p className="text-slate-400 text-sm">
-              We've sent a verification code to <br />
-              <span className="font-semibold text-emerald-400">{maskedEmail}</span>
-            </p>
-          </div>
-
-          {/* OTP Form */}
-          <form onSubmit={handleVerifyOtp} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Enter 6-digit OTP
-              </label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="000000"
-                maxLength={6}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 text-center text-lg tracking-widest"
+    <div className="w-full">
+      <div className="bg-white dark:bg-[#1e293b] border border-[#cbd5e1] dark:border-[#334155] rounded-xl shadow-sm p-8 transition-colors duration-300">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-500/30 mb-4">
+            <svg
+              className="w-8 h-8 text-[#3b5998] dark:text-[#7dd3fc]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading || otp.length !== 6}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors"
-            >
-              {loading ? "Verifying..." : "Verify Email"}
-            </button>
-          </form>
-
-          {/* Resend OTP */}
-          <div className="mt-6 text-center">
-            <p className="text-slate-400 text-sm mb-3">Didn't receive the code?</p>
-            <button
-              onClick={handleResendOtp}
-              disabled={resendLoading || otpCooldown > 0}
-              className="text-emerald-400 hover:text-emerald-300 disabled:text-slate-500 disabled:cursor-not-allowed font-medium text-sm transition-colors"
-            >
-              {otpCooldown > 0
-                ? `Resend in ${otpCooldown}s`
-                : resendLoading
-                  ? "Resending..."
-                  : "Resend OTP"}
-            </button>
+            </svg>
           </div>
+          <h1 className="text-2xl font-bold text-[#1e293b] dark:text-[#f8fafc] mb-2">Verify Your Email</h1>
+          <p className="text-[#64748b] dark:text-[#94a3b8] text-sm">
+            We've sent a verification code to <br />
+            <span className="font-bold text-[#3b5998] dark:text-[#7dd3fc]">{maskedEmail}</span>
+          </p>
         </div>
 
-        {/* Footer Note */}
-        <p className="text-center text-slate-500 text-xs mt-6">
-          This code expires in 15 minutes
-        </p>
+        {/* OTP Form */}
+        <form onSubmit={handleVerifyOtp} className="space-y-6">
+          <div>
+            <label className="block text-xs font-bold text-[#475569] dark:text-[#cbd5e1] mb-2">
+              Enter 6-digit OTP
+            </label>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              placeholder="000000"
+              maxLength={6}
+              className="w-full px-4 py-3 bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] text-center text-lg tracking-widest font-bold transition-all"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading || otp.length !== 6}
+            className="w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white font-bold text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Verifying..." : "Verify Email"}
+          </button>
+        </form>
+
+        {/* Resend OTP */}
+        <div className="mt-6 text-center">
+          <p className="text-[#64748b] dark:text-[#94a3b8] text-sm mb-3 font-semibold">Didn't receive the code?</p>
+          <button
+            onClick={handleResendOtp}
+            disabled={resendLoading || otpCooldown > 0}
+            className="text-[#3b5998] dark:text-[#7dd3fc] hover:underline disabled:text-[#94a3b8] dark:disabled:text-[#64748b] disabled:cursor-not-allowed font-bold text-sm transition-colors"
+          >
+            {otpCooldown > 0
+              ? `Resend in ${otpCooldown}s`
+              : resendLoading
+                ? "Resending..."
+                : "Resend OTP"}
+          </button>
+        </div>
       </div>
+
+      {/* Footer Note */}
+      <p className="text-center text-[#94a3b8] dark:text-[#64748b] text-xs mt-6 font-semibold">
+        This code expires in 15 minutes
+      </p>
     </div>
   );
 }

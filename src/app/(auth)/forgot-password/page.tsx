@@ -17,7 +17,6 @@ type Step = "email" | "otp" | "password";
 export default function ForgotPasswordPage() {
   const router = useRouter();
 
-  // Wrap notify in a try-catch to handle context availability
   let notifyFn = (message: string, options?: any) => {
     console.warn("Notification not available, message:", message);
   };
@@ -37,7 +36,6 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // Handle cooldown timer
   const handleCooldown = () => {
     setResendCooldown(60);
     const timer = setInterval(() => {
@@ -46,7 +44,6 @@ export default function ForgotPasswordPage() {
     return () => clearInterval(timer);
   };
 
-  // Step 1: Send reset OTP
   const handleSendResetOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -83,7 +80,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // Step 2: Verify OTP
   const handleVerifyOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -105,7 +101,6 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  // Step 3: Reset password
   const handleResetPassword = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
@@ -156,66 +151,73 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800 px-4">
-      <div className="max-w-md w-full">
-        <div className="bg-slate-800 rounded-lg shadow-xl p-8 border border-slate-700">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Reset Password</h1>
-            <p className="text-slate-400 text-sm">
-              {step === "email" && "Enter your email to receive a reset code"}
-              {step === "otp" && "Enter the OTP sent to your email"}
-              {step === "password" && "Create a new password"}
-            </p>
-          </div>
+    <div className="w-full">
 
-          {/* Step 1: Email */}
-          {step === "email" && (
-            <form onSubmit={handleSendResetOtp} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+      {/* Brand/Logo Area */}
+      <div className="flex flex-col items-center justify-center mb-8">
+        <div className="h-10 w-10 mb-4 rounded bg-[#3b5998] dark:bg-[#2563eb] flex items-center justify-center font-bold text-white text-lg tracking-tighter shadow-sm">
+          H
+        </div>
+        <h2 className="text-2xl font-bold text-[#1e293b] dark:text-[#f8fafc] tracking-tight text-center">
+          Reset Password
+        </h2>
+        <p className="text-sm text-[#64748b] dark:text-[#94a3b8] mt-2 text-center">
+          {step === "email" && "Enter your email to receive a reset code"}
+          {step === "otp" && "Enter the OTP sent to your email"}
+          {step === "password" && "Create a new strong password"}
+        </p>
+      </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                {loading ? "Sending..." : "Send Reset Code"}
-              </button>
-            </form>
-          )}
+      <div className="bg-white dark:bg-[#1e293b] border border-[#cbd5e1] dark:border-[#334155] rounded-xl shadow-sm overflow-hidden p-8 transition-colors duration-300">
+        
+        {/* Step 1: Email */}
+        {step === "email" && (
+          <form onSubmit={handleSendResetOtp} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
+                Email Address
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="user@example.com"
+                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
+              />
+            </div>
 
-          {/* Step 2: OTP */}
-          {step === "otp" && (
-            <form onSubmit={handleVerifyOtp} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Enter OTP
-                </label>
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  placeholder="000000"
-                  maxLength={6}
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 text-center text-lg tracking-widest"
-                />
-              </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? "Sending..." : "Send Reset Code"}
+            </button>
+          </form>
+        )}
 
+        {/* Step 2: OTP */}
+        {step === "otp" && (
+          <form onSubmit={handleVerifyOtp} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
+                Enter 6-Digit OTP
+              </label>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                maxLength={6}
+                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-3 text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all text-center text-lg tracking-[0.5em] font-bold"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3">
               <button
                 type="submit"
                 disabled={loading || otp.length !== 6}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
+                className="w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Verifying..." : "Verify OTP"}
               </button>
@@ -224,63 +226,73 @@ export default function ForgotPasswordPage() {
                 type="button"
                 onClick={() => setStep("email")}
                 disabled={resendCooldown > 0}
-                className="w-full text-emerald-400 hover:text-emerald-300 disabled:text-slate-500 disabled:cursor-not-allowed font-medium text-sm"
+                className="text-xs font-bold text-[#3b5998] dark:text-[#7dd3fc] hover:underline disabled:text-[#94a3b8] dark:disabled:text-[#64748b] disabled:cursor-not-allowed transition-colors text-center w-full"
               >
-                {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend OTP"}
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Didn't receive it? Resend"}
               </button>
-            </form>
-          )}
+            </div>
+          </form>
+        )}
 
-          {/* Step 3: New Password */}
-          {step === "password" && (
-            <form onSubmit={handleResetPassword} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  New Password
-                </label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+        {/* Step 3: New Password */}
+        {step === "password" && (
+          <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
+                New Password
+              </label>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Confirm Password
-                </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
-                />
-              </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
+              />
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-semibold py-3 rounded-lg transition-colors"
-              >
-                {loading ? "Resetting..." : "Reset Password"}
-              </button>
-            </form>
-          )}
+            <div className="text-[11px] font-semibold text-[#64748b] dark:text-[#94a3b8] border border-[#cbd5e1] dark:border-[#334155] rounded p-2.5 bg-[#f8fafc] dark:bg-[#0f172a]">
+              Password must be at least 8 characters long
+            </div>
 
-          {/* Back to Login */}
-          <div className="mt-6 text-center">
-            <Link
-              href="/login"
-              className="text-slate-400 hover:text-slate-300 text-sm transition-colors"
+            <button
+              type="submit"
+              disabled={loading}
+              className="mt-2 w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Back to login
-            </Link>
-          </div>
-        </div>
+              {loading ? "Processing..." : "Set New Password"}
+            </button>
+          </form>
+        )}
       </div>
+
+      {/* Back to Login Link */}
+      <p className="text-center text-xs text-[#64748b] dark:text-[#94a3b8] mt-6 font-semibold">
+        Remember your password?{" "}
+        <Link
+          href="/login"
+          className="text-[#3b5998] dark:text-[#7dd3fc] font-bold hover:underline transition-colors ml-1"
+        >
+          Log in here
+        </Link>
+      </p>
+
+      {/* Minimal Footer */}
+      <footer className="text-[11px] font-semibold text-[#94a3b8] dark:text-[#64748b] text-center w-full mt-8">
+        &copy; 2026 Heapify Labs. Secure & Encrypted.
+      </footer>
     </div>
   );
 }

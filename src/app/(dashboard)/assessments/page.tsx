@@ -1,5 +1,5 @@
 /**
- * Assessments Page
+ * Assessments Page — 2010s design system
  */
 
 import { Card, CardBody } from "@/components/ui/Card";
@@ -15,8 +15,8 @@ export default function AssessmentsPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Assessments</h1>
-        <p className="text-gray-600 mt-2">Test your knowledge with quizzes and challenges</p>
+        <h1 className="text-3xl font-bold text-[#1e293b] dark:text-[#f8fafc]">Assessments</h1>
+        <p className="text-[#64748b] dark:text-[#94a3b8] mt-2 text-sm">Test your knowledge with quizzes and challenges</p>
       </div>
 
       <div className="space-y-4">
@@ -25,8 +25,8 @@ export default function AssessmentsPage() {
             <CardBody>
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{assessment.title}</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="text-lg font-bold text-[#334155] dark:text-[#f1f5f9]">{assessment.title}</h3>
+                  <p className="text-sm text-[#64748b] dark:text-[#94a3b8]">
                     {assessment.type} • {assessment.questions} questions • {assessment.duration} min
                   </p>
                 </div>

@@ -1,5 +1,5 @@
 /**
- * Button component
+ * Button component — 2010s design system
  */
 
 import React from "react";
@@ -13,12 +13,12 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", isLoading, children, ...props }, ref) => {
     const baseStyles =
-      "font-semibold rounded-lg transition-colors inline-flex items-center justify-center gap-2";
+      "font-bold rounded transition-colors inline-flex items-center justify-center gap-2 shadow-sm";
 
     const variantStyles = {
-      primary: "bg-blue-600 text-white hover:bg-blue-700",
-      secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300",
-      danger: "bg-red-600 text-white hover:bg-red-700",
+      primary: "bg-[#3b5998] dark:bg-[#2563eb] text-white hover:bg-[#2d4373] dark:hover:bg-[#1d4ed8]",
+      secondary: "bg-[#e2e8f0] dark:bg-[#334155] text-[#475569] dark:text-[#cbd5e1] hover:bg-[#cbd5e1] dark:hover:bg-[#475569] border border-[#cbd5e1] dark:border-[#475569]",
+      danger: "bg-red-600 text-white hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800",
     };
 
     const sizeStyles = {

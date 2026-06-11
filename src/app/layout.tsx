@@ -10,7 +10,39 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Heapify - Master Your Software Engineering Interviews",
   description: "Prepare for software engineering interviews with DSA, System Design, DBMS, OS, and Networks",
+  icons: {
+    icon: "/heapify_logo.png",
+    apple: "/heapify_logo.png",
+  },
 };
+
+export const icon = () => {
+  return {
+    url: "/heapify_logo.png",
+    type: "image/png",
+  };
+};
+
+export const apple = () => {
+  return {
+    url: "/heapify_logo.png",
+    type: "image/png",
+  };
+};
+
+// Inline script that runs before React hydrates to prevent flash of wrong theme.
+// Reads the saved theme from localStorage and adds "dark" class to <html> if needed.
+const themeInitScript = `
+(function(){
+  try {
+    var t = localStorage.getItem("theme");
+    var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var isDark = t === "dark" || (!t || t === "system") && prefersDark;
+    if (isDark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+  } catch(e){}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -18,7 +50,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Blocking script: sets dark class before first paint — no theme flash */}
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body>
         <ThemeProvider>
           <ErrorProvider>
@@ -35,3 +71,4 @@ export default function RootLayout({
     </html>
   );
 }
+
