@@ -20,7 +20,7 @@ export default function Home() {
         
         {/* Subtle Badge */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-blue-50 dark:bg-[#1e293b] border border-blue-200 dark:border-[#334155] text-[#3b5998] dark:text-[#7dd3fc] text-xs font-bold tracking-wide mb-8 shadow-inner">
-          FAANG Prep Ecosystem Active
+          MANGOS Prep Ecosystem Active
         </div>
 
         {/* Hero Headline */}

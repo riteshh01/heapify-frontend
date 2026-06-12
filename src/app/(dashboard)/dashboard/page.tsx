@@ -103,7 +103,7 @@ export default function DashboardPage() {
         {/* Welcome header */}
         <div className="mb-10">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#3b5998] dark:bg-[#7dd3fc] animate-pulse" />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 dark:bg-green-400 animate-pulse" />
             <span className="text-xs text-[#64748b] dark:text-[#94a3b8] font-bold">Active session</span>
           </div>
           <h1 className="text-3xl font-bold text-[#1e293b] dark:text-[#f8fafc] tracking-tight">

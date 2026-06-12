@@ -11,12 +11,14 @@ import { FiSun, FiMoon } from "react-icons/fi";
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
+// Emojis removed completely aur Git add kar diya gaya hai
 const SUBJECT_LINKS = [
-  { label: "DSA Sheet", href: "/learning/dsa_sheet"}, // Added emoji placeholder based on your original code usage
-  { label: "OS", href: "/learning/os"},
-  { label: "CN", href: "/learning/networks"},
-  { label: "DBMS", href: "/learning/dbms"},
-  { label: "System Design", href: "/learning/system-design"},
+  { label: "DSA Sheet", href: "/learning/dsa_sheet" },
+  { label: "OS", href: "/learning/os" },
+  { label: "CN", href: "/learning/networks" },
+  { label: "DBMS", href: "/learning/dbms" },
+  { label: "System Design", href: "/learning/system-design" },
+  { label: "Git", href: "/learning/git" }, 
 ];
 
 export function Navbar() {
@@ -69,7 +71,6 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#cbd5e1] dark:border-[#1e3a5f] backdrop-blur-sm bg-[#f8fafc]/90 dark:bg-[#0f172a]/90 transition-colors duration-300">
-      {/* Yahan par px-5 ko px-6 kiya gaya hai aur w-full add kiya gaya hai */}
       <div className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto w-full">
 
         {/* Logo */}
@@ -77,7 +78,7 @@ export function Navbar() {
           <div className="h-7 w-7 rounded bg-[#3b5998] dark:bg-[#2563eb] flex items-center justify-center font-bold text-white text-sm tracking-tighter shadow-sm">
             H
           </div>
-          <span className="font-bold text-sm tracking-tight text-[#3b5998] dark:text-[#7dd3fc]">Heapify.</span>
+          <span className="font-bold text-sm tracking-tight text-[#3b5998] dark:text-[#336eed]">Heapify.</span>
         </Link>
 
         {/* Subject Tabs — only when logged in (desktop) */}
@@ -94,7 +95,6 @@ export function Navbar() {
                     : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155]"
                     }`}
                 >
-                  <span>{link.emoji}</span>
                   {link.label}
                 </Link>
               );
@@ -102,18 +102,18 @@ export function Navbar() {
           </nav>
         )}
 
-        {/* Public nav links — when NOT logged in */}
+        {/* Public nav links — when NOT logged in (desktop) */}
         {!isLoggedIn && (
           <nav className="hidden md:flex items-center gap-7 text-sm font-semibold text-[#475569] dark:text-[#cbd5e1]">
-            <a href="/#features" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
+            <Link href="/#features" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
               Features
-            </a>
-            <a href="/#courses" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
+            </Link>
+            <Link href="/#courses" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
               Curriculum
-            </a>
-            <a href="/docs" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
+            </Link>
+            <Link href="/docs" className="hover:text-[#3b5998] dark:hover:text-[#7dd3fc] transition-colors">
               Docs
-            </a>
+            </Link>
           </nav>
         )}
 
@@ -147,60 +147,86 @@ export function Navbar() {
               <button
                 onClick={handleLogout}
                 disabled={isLoading}
-                className="text-xs font-bold bg-white dark:bg-[#1e293b] text-[#64748b] dark:text-[#94a3b8] hover:text-red-600 dark:hover:text-red-400 px-3.5 py-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-all border border-[#cbd5e1] dark:border-[#334155] hover:border-red-300 dark:hover:border-red-500/30 disabled:opacity-50 shadow-sm"
+                className="hidden md:block text-xs font-bold bg-white dark:bg-[#1e293b] text-[#64748b] dark:text-[#94a3b8] hover:text-red-600 dark:hover:text-red-400 px-3.5 py-1.5 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-all border border-[#cbd5e1] dark:border-[#334155] hover:border-red-300 dark:hover:border-red-500/30 disabled:opacity-50 shadow-sm"
               >
                 {isLoading ? "Signing out..." : "Sign out"}
-              </button>
-              {/* Mobile hamburger */}
-              <button
-                onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2 rounded text-[#475569] dark:text-[#cbd5e1] hover:text-[#3b5998] dark:hover:text-[#7dd3fc] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] transition-all"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-                </svg>
               </button>
             </>
           ) : (
             <Link
               href="/login"
-              className="text-xs font-bold bg-[#3b5998] dark:bg-[#2563eb] hover:bg-[#2d4373] dark:hover:bg-[#1d4ed8] text-white px-4 py-2 rounded transition-all shadow-sm"
+              className="hidden md:block text-xs font-bold bg-[#3b5998] dark:bg-[#2563eb] hover:bg-[#2d4373] dark:hover:bg-[#1d4ed8] text-white px-4 py-2 rounded transition-all shadow-sm"
             >
               Sign In
             </Link>
           )}
+
+          {/* Mobile hamburger icon */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden p-2 rounded text-[#475569] dark:text-[#cbd5e1] hover:text-[#3b5998] dark:hover:text-[#7dd3fc] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] transition-all"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
         </div>
       </div>
 
       {/* Mobile subject menu */}
-      {isLoggedIn && mobileOpen && (
-        <div className="md:hidden border-t border-[#cbd5e1] dark:border-[#1e3a5f] bg-[#f8fafc]/95 dark:bg-[#0f172a]/95 px-6 py-3 flex flex-col gap-1">
-          {SUBJECT_LINKS.map((link) => {
-            const isActive = pathname?.startsWith(link.href);
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded text-sm font-bold transition-all ${isActive
-                  ? "bg-blue-50 dark:bg-blue-900/30 text-[#3b5998] dark:text-[#7dd3fc]"
-                  : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155]"
-                  }`}
-              >
-                <span>{link.emoji}</span>
-                {link.label}
-              </Link>
-            );
-          })}
-          <div className="border-t border-[#cbd5e1] dark:border-[#1e3a5f] pt-2 mt-1">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-2 px-3 py-2.5 rounded text-sm font-bold text-[#64748b] dark:text-[#94a3b8] hover:text-[#3b5998] dark:hover:text-[#7dd3fc] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] transition-all"
-            >
-              Dashboard
-            </Link>
-          </div>
+      {mobileOpen && (
+        <div className="md:hidden border-t border-[#cbd5e1] dark:border-[#1e3a5f] bg-[#f8fafc]/95 dark:bg-[#0f172a]/95 px-6 py-4 flex flex-col gap-2 shadow-inner">
+          {isLoggedIn ? (
+            <>
+              {SUBJECT_LINKS.map((link) => {
+                const isActive = pathname?.startsWith(link.href);
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded text-sm font-bold transition-all ${isActive
+                      ? "bg-blue-50 dark:bg-blue-900/30 text-[#3b5998] dark:text-[#7dd3fc]"
+                      : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155]"
+                      }`}
+                  >
+                    {link.label}
+                  </Link>
+                );
+              })}
+              <div className="border-t border-[#cbd5e1] dark:border-[#1e3a5f] pt-3 mt-2 flex flex-col gap-2">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded text-sm font-bold text-[#64748b] dark:text-[#94a3b8] hover:text-[#3b5998] dark:hover:text-[#7dd3fc] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] transition-all"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleLogout();
+                  }}
+                  disabled={isLoading}
+                  className="text-left w-full px-3 py-2.5 rounded text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
+                >
+                  {isLoading ? "Signing out..." : "Sign out"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Public mobile menu for non-logged-in users */}
+              <Link href="/#features" onClick={() => setMobileOpen(false)} className="px-3 py-2.5 text-sm font-semibold text-[#475569] dark:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] rounded">Features</Link>
+              <Link href="/#courses" onClick={() => setMobileOpen(false)} className="px-3 py-2.5 text-sm font-semibold text-[#475569] dark:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] rounded">Curriculum</Link>
+              <Link href="/docs" onClick={() => setMobileOpen(false)} className="px-3 py-2.5 text-sm font-semibold text-[#475569] dark:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#334155] rounded">Docs</Link>
+              <div className="border-t border-[#cbd5e1] dark:border-[#1e3a5f] pt-3 mt-2">
+                <Link href="/login" onClick={() => setMobileOpen(false)} className="block text-center w-full text-sm font-bold bg-[#3b5998] dark:bg-[#2563eb] text-white px-4 py-2.5 rounded shadow-sm">
+                  Sign In
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       )}
     </header>
