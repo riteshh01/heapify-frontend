@@ -9,14 +9,6 @@ import Link from "next/link";
 interface AuthResponse {
   success: boolean;
   message: string;
-  data?: {
-    token?: string;
-    user?: {
-      id: string;
-      email: string;
-      name: string;
-    };
-  };
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
@@ -40,7 +32,7 @@ export default function LoginPage() {
     console.error("NotificationContext not available:", e);
   }
 
-  const { setIsLoggedIn, getUserData, saveUserToStorage } = authContext;
+  const { setIsLoggedIn, getUserData } = authContext;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -84,10 +76,6 @@ export default function LoginPage() {
       if (data.success) {
         setIsLoggedIn(true);
         notifyFn("Login successful! Welcome back", { type: "success" });
-        // Save user data to localStorage so session survives refresh
-        if (data.data?.user) {
-          saveUserToStorage(data.data.user as any);
-        }
         await getUserData();
         router.push("/dashboard");
       } else {

@@ -2,16 +2,33 @@
 
 /**
  * Authentication Context
- * Manages user authentication state and session
+ *
+ * Session persistence strategy (no localStorage for auth state):
+ *   1. On mount → call GET /api/auth/me with credentials:"include"
+ *   2. If /me returns user data → populate state (access token is valid)
+ *   3. If /me returns 401 → api.ts interceptor auto-calls POST /refresh
+ *   4. If refresh succeeds → /me is replayed automatically → user stays logged in
+ *   5. If refresh also fails → "auth:logout" event fires → clear state, user sees login
+ *
+ * This means a page refresh NEVER logs the user out as long as either the
+ * 15-min access token or the 7-day refresh token is still valid.
+ * No JWT or sensitive data ever touches localStorage.
  */
 
-import React, { createContext, useCallback, useEffect, useState } from "react";
-import { AuthSession, User } from "@/types";
-import { clearAuthToken, setAuthToken } from "@/services/api";
+import React, {
+  createContext,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { User } from "@/types";
+import { apiCall } from "@/services/api";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface AuthContextType {
   user: User | null;
-  session: AuthSession | null;
   isAuthenticated: boolean;
   isLoggedIn: boolean;
   isLoading: boolean;
@@ -31,39 +48,19 @@ interface AuthContextType {
   setOtpExpiry: (expiry: string) => void;
   setOtpCooldown: (cooldown: number) => void;
   getUserData: () => Promise<void>;
-  saveUserToStorage: (user: User) => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/** Safely read a JSON value from localStorage */
-function readStorage<T>(key: string): T | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as T;
-  } catch {
-    return null;
-  }
-}
+// ─── Constants ────────────────────────────────────────────────────────────────
 
-/** Safely write a JSON value to localStorage */
-function writeStorage(key: string, value: unknown): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {}
-}
+const AUTH_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
-/** Safely remove a key from localStorage */
-function removeStorage(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {}
-}
+// ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<AuthSession | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userEmail, setUserEmail] = useState("");
@@ -72,124 +69,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [otpExpiry, setOtpExpiry] = useState<string | null>(null);
   const [otpCooldown, setOtpCooldown] = useState(0);
 
-  // ── Save user to localStorage (called from login page after successful login) ──
-  const saveUserToStorage = useCallback((userData: User) => {
-    writeStorage("authUser", userData);
-    writeStorage("authLoggedIn", true);
-  }, []);
-
-  // ── Initialize auth from localStorage on mount ─────────────────────────────
+  // ── Validate session on mount via API (replaces localStorage hydration) ───
+  // The httpOnly cookies are sent automatically. If the access token has
+  // expired, api.ts silently refreshes it before this resolves.
   useEffect(() => {
-    const initializeAuth = async () => {
+    const validateSession = async () => {
       try {
-        // First restore from localStorage immediately (no flicker)
-        const storedLoggedIn = localStorage.getItem("authLoggedIn");
-        const storedUser = readStorage<User>("authUser");
+        const data = await apiCall<{ success: boolean; data?: { user: User } }>(
+          `${AUTH_BASE_URL}/me`
+        );
 
-        if (storedLoggedIn === "true" && storedUser) {
-          setUser(storedUser);
+        if (data.success && data.data?.user) {
+          setUser(data.data.user);
           setIsLoggedIn(true);
         }
-
-        // Also try the legacy authSession format
-        const storedSession = readStorage<AuthSession>("authSession");
-        if (storedSession) {
-          if (new Date(storedSession.expiresAt) > new Date()) {
-            setSession(storedSession);
-            if (!storedUser) {
-              setUser(storedSession.user);
-              setIsLoggedIn(true);
-            }
-            setAuthToken(storedSession.token);
-          } else {
-            removeStorage("authSession");
-            clearAuthToken();
-          }
-        }
-      } catch (error) {
-        console.error("Auth initialization error:", error);
-        removeStorage("authSession");
-        removeStorage("authUser");
-        removeStorage("authLoggedIn");
-        clearAuthToken();
-        setIsLoggedIn(false);
+      } catch {
+        // 401 after failed refresh → "auth:logout" event will fire from api.ts
+        // Nothing extra needed here; state stays empty → user sees login page.
       } finally {
         setIsLoading(false);
       }
     };
 
-    initializeAuth();
+    validateSession();
   }, []);
 
-  const login = useCallback(
-    async (email: string, password: string) => {
-      // TODO: Replace with actual API call
-      // const response = await post<AuthSession>("/auth/login", { email, password });
-      // setSession(response);
-      // setUser(response.user);
-      // setIsLoggedIn(true);
-      // setAuthToken(response.token);
-      // writeStorage("authSession", response);
-      // saveUserToStorage(response.user);
-    },
-    []
-  );
+  // ── Listen for the global auth:logout event emitted by api.ts ─────────────
+  // Fired when a token refresh fails (both tokens expired). Clears all state
+  // so the user is redirected to login by the route guard.
+  useEffect(() => {
+    const handleForcedLogout = () => {
+      setUser(null);
+      setIsLoggedIn(false);
+    };
 
+    window.addEventListener("auth:logout", handleForcedLogout);
+    return () => window.removeEventListener("auth:logout", handleForcedLogout);
+  }, []);
+
+  // ── Login (stub — actual call is in login/page.tsx directly) ─────────────
+  const login = useCallback(async (_email: string, _password: string) => {
+    // TODO: wire up when login page is refactored to use this context method
+    // const data = await post<{ success: boolean }>(`${AUTH_BASE_URL}/login`, { email, password });
+    // if (data.success) await getUserData();
+  }, []);
+
+  // ── Signup stub ───────────────────────────────────────────────────────────
   const signup = useCallback(
-    async (email: string, password: string, name: string) => {
-      // TODO: Replace with actual API call
-      // const response = await post<AuthSession>("/auth/signup", {
-      //   email,
-      //   password,
-      //   name,
-      // });
-      // setSession(response);
-      // setUser(response.user);
-      // setIsLoggedIn(true);
-      // setAuthToken(response.token);
-      // writeStorage("authSession", response);
-      // saveUserToStorage(response.user);
+    async (_email: string, _password: string, _name: string) => {
+      // TODO: wire up when signup page is refactored to use this context method
     },
     []
   );
 
+  // ── Logout — clears both httpOnly cookies server-side ────────────────────
   const logout = useCallback(async () => {
-    setUser(null);
-    setSession(null);
-    setIsLoggedIn(false);
-    clearAuthToken();
-    removeStorage("authSession");
-    removeStorage("authUser");
-    removeStorage("authLoggedIn");
-    // TODO: Call logout endpoint
-  }, []);
-
-  const getUserData = useCallback(async () => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
-      const response = await fetch(`${API_BASE_URL}/is-auth`, {
+      await fetch(`${AUTH_BASE_URL}/logout`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
+    } catch (error) {
+      console.error("Logout request failed:", error);
+    } finally {
+      setUser(null);
+      setIsLoggedIn(false);
+    }
+  }, []);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data?.user) {
-          const userData = data.data.user as User;
-          setUser(userData);
-          // Persist user data so refresh keeps the session alive
-          saveUserToStorage(userData);
-        }
+  // ── Fetch current user from /me (can be called anywhere to refresh data) ──
+  const getUserData = useCallback(async () => {
+    try {
+      const data = await apiCall<{ success: boolean; data?: { user: User } }>(
+        `${AUTH_BASE_URL}/me`
+      );
+
+      if (data.success && data.data?.user) {
+        setUser(data.data.user);
+        setIsLoggedIn(true);
       }
     } catch (error) {
       console.error("Failed to fetch user data:", error);
     }
-  }, [saveUserToStorage]);
+  }, []);
 
   const value: AuthContextType = {
     user,
-    session,
     isAuthenticated: !!user,
     isLoggedIn,
     isLoading,
@@ -209,7 +174,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setOtpExpiry,
     setOtpCooldown,
     getUserData,
-    saveUserToStorage,
   };
 
   return (

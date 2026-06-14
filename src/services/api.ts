@@ -1,84 +1,99 @@
 /**
- * Centralized API client setup with interceptors
- * Handles authentication, error handling, and common configurations
+ * Centralized API client
+ *
+ * Security: JWT is stored exclusively in httpOnly cookies managed by the
+ * backend. This file never reads or writes tokens. The browser forwards
+ * cookies automatically on every credentialed request.
+ *
+ * Refresh flow:
+ *   Any 401 response → POST /auth/refresh (silent, once) → replay request.
+ *   If /refresh also fails → emit global "auth:logout" event so AuthContext
+ *   can clear state and redirect the user to /login.
  */
 
-import { ApiResponse } from "@/types";
+const AUTH_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  process.env.NEXT_PUBLIC_API_URL ||
+  "http://localhost:5000/api";
 
-interface FetchOptions extends RequestInit {
-  skipAuth?: boolean;
+// ─── Refresh-race guard ───────────────────────────────────────────────────────
+// If multiple concurrent requests all 401 at the same time we only want ONE
+// refresh call in flight. All other callers wait on the same promise.
+let refreshPromise: Promise<boolean> | null = null;
+
+async function attemptRefresh(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = fetch(`${AUTH_BASE_URL}/refresh`, {
+    method: "POST",
+    credentials: "include",
+  })
+    .then((r) => r.ok)
+    .catch(() => false)
+    .finally(() => {
+      refreshPromise = null;
+    });
+
+  return refreshPromise;
 }
 
-/**
- * Enhanced fetch wrapper with automatic error handling
- */
+// ─── Core fetch wrapper ───────────────────────────────────────────────────────
+
+type FetchOptions = RequestInit & { _isRetry?: boolean };
+
 export async function apiCall<T = unknown>(
   endpoint: string,
   options: FetchOptions = {}
 ): Promise<T> {
-  const {
-    method = "GET",
-    headers: customHeaders = {},
-    skipAuth = false,
-    ...rest
-  } = options;
+  const { _isRetry = false, headers: customHeaders = {}, method = "GET", ...rest } = options;
 
-  const url = `${API_BASE_URL}${endpoint}`;
+  const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint}`;
 
-  // Build headers
   const headers = new Headers({
     "Content-Type": "application/json",
-    ...customHeaders,
+    ...(customHeaders as Record<string, string>),
   });
 
-  // Add auth token if available and not skipped
-  if (!skipAuth) {
-    const token = getAuthToken();
-    if (token) {
-      headers.append("Authorization", `Bearer ${token}`);
+  const response = await fetch(url, {
+    method,
+    headers,
+    credentials: "include", // always send httpOnly cookies
+    ...rest,
+  });
+
+  // ── 401 → try silent refresh, then replay ──────────────────────────────────
+  if (response.status === 401 && !_isRetry) {
+    const refreshed = await attemptRefresh();
+
+    if (refreshed) {
+      // Replay the original request (with retry flag to prevent loops)
+      return apiCall<T>(endpoint, { ...options, _isRetry: true });
     }
+
+    // Refresh also failed — session is truly expired
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("auth:logout"));
+    }
+    throw new ApiError(401, "Session expired. Please log in again.", "SESSION_EXPIRED");
   }
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers,
-      ...rest,
-    });
-
-    // Handle non-OK responses
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        response.status,
-        errorData.message || response.statusText,
-        errorData.code
-      );
-    }
-
-    const data = await response.json();
-    return data as T;
-  } catch (error) {
-    // Re-throw if already an ApiError
-    if (error instanceof ApiError) {
-      throw error;
-    }
-
-    // Handle network errors
-    if (error instanceof TypeError) {
-      throw new ApiError(0, "Network error. Please check your connection.");
-    }
-
-    // Handle other errors
-    throw new ApiError(500, "An unexpected error occurred");
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new ApiError(
+      response.status,
+      errorData.message || response.statusText,
+      errorData.code
+    );
   }
+
+  return response.json() as Promise<T>;
 }
 
-/**
- * Custom ApiError class for better error handling
- */
+// ─── ApiError ─────────────────────────────────────────────────────────────────
+
 export class ApiError extends Error {
   constructor(
     public status: number,
@@ -90,40 +105,12 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * Get stored auth token from localStorage
- */
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("authToken");
-}
+// ─── Typed HTTP helpers ───────────────────────────────────────────────────────
 
-/**
- * Store auth token in localStorage
- */
-export function setAuthToken(token: string): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("authToken", token);
-}
-
-/**
- * Clear auth token from localStorage
- */
-export function clearAuthToken(): void {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem("authToken");
-}
-
-/**
- * Typed GET request
- */
 export async function get<T>(endpoint: string, options?: FetchOptions): Promise<T> {
   return apiCall<T>(endpoint, { ...options, method: "GET" });
 }
 
-/**
- * Typed POST request
- */
 export async function post<T>(
   endpoint: string,
   data?: unknown,
@@ -136,9 +123,6 @@ export async function post<T>(
   });
 }
 
-/**
- * Typed PUT request
- */
 export async function put<T>(
   endpoint: string,
   data?: unknown,
@@ -151,9 +135,6 @@ export async function put<T>(
   });
 }
 
-/**
- * Typed PATCH request
- */
 export async function patch<T>(
   endpoint: string,
   data?: unknown,
@@ -166,9 +147,6 @@ export async function patch<T>(
   });
 }
 
-/**
- * Typed DELETE request
- */
 export async function deleteRequest<T>(
   endpoint: string,
   options?: FetchOptions
@@ -176,42 +154,31 @@ export async function deleteRequest<T>(
   return apiCall<T>(endpoint, { ...options, method: "DELETE" });
 }
 
-/**
- * Get user-friendly error message from API error
- * Provides better error messages for different scenarios
- */
+// ─── Deprecated stubs (kept to avoid breaking imports) ───────────────────────
+
+/** @deprecated Token is managed server-side via httpOnly cookies. */
+export function setAuthToken(_token: string): void {}
+
+/** @deprecated Token is cleared server-side via POST /auth/logout. */
+export function clearAuthToken(): void {}
+
+// ─── Error message helper ─────────────────────────────────────────────────────
+
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    // Common API error status codes
     switch (error.status) {
-      case 400:
-        return "Invalid request. Please check your input.";
-      case 401:
-        return "Unauthorized. Please log in again.";
-      case 403:
-        return "You don't have permission to do this.";
-      case 404:
-        return "Resource not found.";
-      case 409:
-        return "Conflict. This resource already exists.";
-      case 429:
-        return "Too many requests. Please try again later.";
-      case 500:
-        return "Server error. Please try again later.";
-      case 503:
-        return "Service unavailable. Please try again later.";
-      default:
-        return error.message || "An error occurred";
+      case 400: return "Invalid request. Please check your input.";
+      case 401: return "Session expired. Please log in again.";
+      case 403: return "You don't have permission to do this.";
+      case 404: return "Resource not found.";
+      case 409: return "Conflict. This resource already exists.";
+      case 429: return "Too many requests. Please try again later.";
+      case 500: return "Server error. Please try again later.";
+      case 503: return "Service unavailable. Please try again later.";
+      default:  return error.message || "An error occurred";
     }
   }
-
-  if (error instanceof TypeError) {
-    return "Network error. Please check your connection.";
-  }
-
-  if (typeof error === "string") {
-    return error;
-  }
-
+  if (error instanceof TypeError) return "Network error. Please check your connection.";
+  if (typeof error === "string") return error;
   return "An unexpected error occurred";
 }
