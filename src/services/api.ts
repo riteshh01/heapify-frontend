@@ -24,6 +24,27 @@ const API_BASE_URL =
 // refresh call in flight. All other callers wait on the same promise.
 let refreshPromise: Promise<boolean> | null = null;
 
+// ─── CSRF token reader ────────────────────────────────────────────────────────
+// The server sets a non-httpOnly "csrfToken" cookie on every login / token
+// rotation. We read it here and send it as X-CSRF-Token on state-changing
+// requests so the backend Double Submit Cookie check passes.
+
+/** HTTP methods that mutate state and therefore require a CSRF token. */
+const CSRF_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Parse the csrfToken value from document.cookie.
+ * Returns an empty string if the cookie isn't present (e.g. SSR context or
+ * before first login).
+ */
+function getCsrfToken(): string {
+  if (typeof document === "undefined") return ""; // SSR guard
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("csrfToken="));
+  return match ? match.split("=")[1] ?? "" : "";
+}
+
 async function attemptRefresh(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
 
@@ -56,6 +77,16 @@ export async function apiCall<T = unknown>(
     "Content-Type": "application/json",
     ...(customHeaders as Record<string, string>),
   });
+
+  // Automatically inject CSRF token for state-changing requests.
+  // The server set a non-httpOnly "csrfToken" cookie on login — we read it
+  // here and mirror it in the X-CSRF-Token header (Double Submit Cookie pattern).
+  if (CSRF_METHODS.has(method.toUpperCase())) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers.set("X-CSRF-Token", csrfToken);
+    }
+  }
 
   const response = await fetch(url, {
     method,

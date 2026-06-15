@@ -2,7 +2,7 @@
 
 // Layout components
 export { Navbar } from "./layout/Navbar";
-export { Sidebar } from "./layout/Sidebar";
+export { default as Sidebar } from "./layout/Sidebar";
 export { Footer } from "./layout/Footer";
 export { LayoutWrapper } from "./layout/LayoutWrapper";
 

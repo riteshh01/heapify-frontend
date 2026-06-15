@@ -13,6 +13,7 @@ import {
   FiWifi,
   FiDatabase,
   FiBookOpen,
+  FiGitBranch,
 } from "react-icons/fi";
 
 // --- Interfaces ---
@@ -141,9 +142,10 @@ const DSASidebar: React.FC<SidebarProps> = ({
             Other Subjects
           </div>
           {[
-            { label: "OS", href: "/learning/os", icon: <FiCpu size={12} /> },
+                      { label: "OS", href: "/learning/os", icon: <FiCpu size={12} /> },
             { label: "Networks (CN)", href: "/learning/networks", icon: <FiWifi size={12} /> },
             { label: "DBMS", href: "/learning/dbms", icon: <FiDatabase size={12} /> },
+            { label: "Git", href: "/learning/git", icon: <FiGitBranch size={12} /> },
             { label: "Dashboard", href: "/dashboard", icon: <FiBookOpen size={12} /> },
           ].map((item) => (
             <Link

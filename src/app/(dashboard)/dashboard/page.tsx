@@ -9,6 +9,7 @@ import {
   FiCpu,
   FiWifi,
   FiDatabase,
+  FiGitBranch,
   FiArrowRight,
   FiCheckCircle,
   FiTrendingUp,
@@ -39,6 +40,12 @@ const SUBJECTS = [
     href: "/learning/dbms",
     icon: <FiDatabase size={20} />,
     description: "SQL, normalization, transactions, indexing & NoSQL",
+  },
+  {
+    label: "Git & Version Control",
+    href: "/learning/git",
+    icon: <FiGitBranch size={20} />,
+    description: "Branching, merging, rebasing, remotes & real-world Git workflows",
   },
 ];
 

@@ -26,6 +26,13 @@ export const KNOWLEDGE_ENDPOINTS = {
   TOGGLE_PROGRESS:  "/knowledge/progress/toggle",
 } as const;
 
+// ===== THEORY ENDPOINTS =====
+export const THEORY_ENDPOINTS = {
+  SUBJECTS:            "/theory/subjects",
+  CHAPTERS_BY_SUBJECT: (subjectId: string | number) => `/theory/subjects/${subjectId}/chapters`,
+  ARTICLE:             (articleId: string | number) => `/theory/articles/${articleId}`,
+} as const;
+
 
 // ===== LEARNING ENDPOINTS =====
 export const LEARNING_ENDPOINTS = {
