@@ -27,6 +27,8 @@ import {
   type TheoryArticleStub,
   type TheoryArticle,
 } from "@/services/theoryService";
+import Spinner  from "@/components/loading/Spinner";
+
 
 // The Git subject name as stored in theory_subjects table
 const GIT_SUBJECT_NAME = "Git & Version Control";
@@ -406,12 +408,21 @@ function ArticlePanel({
 }) {
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-24 gap-3">
-        <div className="w-5 h-5 border-2 border-[#3b5998] dark:border-[#7dd3fc] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-semibold text-[#3b5998] dark:text-[#7dd3fc]">
-          Loading article...
-        </p>
+    <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-slate-100 dark:bg-[#0a0f1a]">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-white dark:bg-[#111827] px-10 py-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <Spinner />
+
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+            Loading Git Articles
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Fetching Articles...
+          </p>
+        </div>
       </div>
+    </div>
     );
   }
 
@@ -547,14 +558,21 @@ export default function GitPage() {
   // ── Loading state ─────────────────────────────────────────────────────────
   if (isChaptersLoading) {
     return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#e2e8f0] dark:bg-[#0a0f1a]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-[#3b5998] dark:border-[#7dd3fc] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[#3b5998] dark:text-[#7dd3fc] font-bold text-sm">
-            Loading Git chapters...
+    <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-slate-100 dark:bg-[#0a0f1a]">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-white dark:bg-[#111827] px-10 py-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <Spinner />
+
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+            Loading Git Articles
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Fetching Git Articles...
           </p>
         </div>
       </div>
+    </div>
     );
   }
 

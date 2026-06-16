@@ -22,6 +22,7 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import DSASidebar from "@/components/layout/Sidebar";
+import Spinner  from "@/components/loading/Spinner";
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -217,17 +218,25 @@ const DSASheet: React.FC = () => {
   );
 
   // ── Loading state ─────────────────────────────────────────────────────────
-  if (isDataLoading) {
-    return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#e2e8f0] dark:bg-[#0a0f1a]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 border-4 border-[#3b5998] dark:border-[#7dd3fc] border-t-transparent rounded-full animate-spin" />
-          <p className="text-[#3b5998] dark:text-[#7dd3fc] font-bold text-sm">Loading DSA Sheet...</p>
+if (isDataLoading) {
+  return (
+    <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-slate-100 dark:bg-[#0a0f1a]">
+      <div className="flex flex-col items-center gap-4 rounded-2xl bg-white dark:bg-[#111827] px-10 py-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <Spinner />
+
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-slate-800 dark:text-white">
+            Loading DSA Sheet
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            Fetching problems, progress and statistics...
+          </p>
         </div>
       </div>
-    );
-  }
-
+    </div>
+  );
+}
   // ── Error state ───────────────────────────────────────────────────────────
   if (fetchError) {
     return (
