@@ -14,6 +14,7 @@ export const AUTH_ENDPOINTS = {
   RESET_PASSWORD: "/auth/reset-password",
   REFRESH_TOKEN: "/auth/refresh",
   ME: "/auth/me",
+  GOOGLE_OAUTH: "/auth/google",
 } as const;
 
 // ===== KNOWLEDGE / DSA ENDPOINTS =====
