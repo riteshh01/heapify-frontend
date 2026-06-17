@@ -44,8 +44,6 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = () => {
     setGoogleLoading(true);
-    // Navigate the full browser window to the backend OAuth initiation URL.
-    // The backend issues a redirect to Google — this cannot be done with fetch.
     window.location.href = GOOGLE_OAUTH_URL;
   };
 
@@ -97,113 +95,130 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
   return (
-    <div className="w-full">
-        <div className="flex flex-col items-center justify-center mb-8">
-          <div className="h-10 w-10 mb-4 rounded bg-[#3b5998] dark:bg-[#2563eb] flex items-center justify-center font-bold text-white text-lg tracking-tighter shadow-sm">
+    <div className="w-full pb-4">
+        {/* Header Section */}
+        <div className="flex flex-col items-center justify-center mb-6">
+          <div className="h-10 w-10 mb-3 rounded-2xl bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center font-bold text-white text-xl tracking-tighter shadow-md">
             H
           </div>
-          <h2 className="text-2xl font-bold text-[#1e293b] dark:text-[#f8fafc] tracking-tight text-center">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight text-center">
             Welcome back
           </h2>
-          <p className="text-sm text-[#64748b] dark:text-[#94a3b8] mt-2">
+          <p className="text-xs font-medium text-[#4a5568] dark:text-[#8b949e] mt-1">
             Log in to your technical dashboard.
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[#1e293b] border border-[#cbd5e1] dark:border-[#334155] rounded-xl shadow-sm overflow-hidden p-8 transition-colors duration-300">
-          <form onSubmit={onSubmitHandler} className="flex flex-col gap-5">
+        {/* Solid Form Card */}
+        <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-3xl shadow-sm overflow-hidden p-5 sm:p-7 transition-colors duration-300">
+          <form onSubmit={onSubmitHandler} className="flex flex-col gap-4">
+            
+            {/* Email Input */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">Email Address</label>
+              <label className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e] uppercase tracking-wider">
+                Email Address
+              </label>
               <input
                 onChange={(e) => setEmail(e.target.value)}
                 value={email}
                 type="email"
                 placeholder="user@example.com"
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
+                className="w-full h-11 bg-[#f0f3f6] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl px-4 text-sm text-[#1a202c] dark:text-[#f0f6fc] placeholder:text-[#a0aec0] dark:placeholder:text-[#4b5563] focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
             </div>
 
+            {/* Password Input */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">Password</label>
+              <label className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e] uppercase tracking-wider">
+                Password
+              </label>
               <input
                 onChange={(e) => setPassword(e.target.value)}
                 value={password}
                 type="password"
                 placeholder="••••••••"
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
+                className="w-full h-11 bg-[#f0f3f6] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl px-4 text-sm text-[#1a202c] dark:text-[#f0f6fc] placeholder:text-[#a0aec0] dark:placeholder:text-[#4b5563] focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
               />
             </div>
 
+            {/* Remember Me & Forgot Password */}
             <div className="flex justify-between items-center mt-1">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={rememberMe}
                   onChange={handleCheckboxChange}
-                  className="w-4 h-4 rounded border-[#cbd5e1] dark:border-[#334155] bg-white dark:bg-[#0f172a] text-[#3b5998] focus:ring-[#3b5998] transition-all cursor-pointer accent-[#3b5998]"
+                  className="w-3.5 h-3.5 rounded border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#0d1117] text-emerald-600 focus:ring-emerald-500 transition-all cursor-pointer accent-emerald-600"
                 />
-                <span className="text-xs font-semibold text-[#64748b] dark:text-[#94a3b8] group-hover:text-[#334155] dark:group-hover:text-[#cbd5e1] transition-colors">
+                <span className="text-[11px] font-semibold text-[#4a5568] dark:text-[#8b949e] group-hover:text-[#1a202c] dark:group-hover:text-[#c9d1d9] transition-colors">
                   Remember Me
                 </span>
               </label>
 
               <Link
                 href="/forgot-password"
-                className="text-xs font-semibold text-[#3b5998] dark:text-[#7dd3fc] hover:underline transition-colors"
+                className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline transition-colors"
               >
                 Forgot Password?
               </Link>
             </div>
 
+            {/* Green Toast Notification */}
             {showToast && (
-              <div className="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 text-[#3b5998] dark:text-[#7dd3fc] text-[11px] p-2.5 rounded text-center flex items-center justify-center gap-2 font-semibold">
+              <div className="border border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 text-[10px] p-2 rounded-lg text-center flex items-center justify-center gap-2 font-semibold animate-in fade-in zoom-in duration-200">
                 You will stay signed in for 30 days
               </div>
             )}
 
+            {/* Login Button */}
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-1 w-full flex h-11 items-center justify-center rounded-xl bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500 px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
             >
               {loading ? "Processing..." : "Sign In"}
             </button>
 
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-[#cbd5e1] dark:border-[#334155]"></div>
-              <span className="flex-shrink-0 mx-4 text-xs font-bold text-[#94a3b8] dark:text-[#64748b] uppercase">or</span>
-              <div className="flex-grow border-t border-[#cbd5e1] dark:border-[#334155]"></div>
+            {/* Divider */}
+            <div className="relative flex items-center py-1">
+              <div className="flex-grow border-t border-[#e2e8f0] dark:border-[#30363d]"></div>
+              <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-wider">or</span>
+              <div className="flex-grow border-t border-[#e2e8f0] dark:border-[#30363d]"></div>
             </div>
 
+            {/* Google OAuth Button */}
             <button
               type="button"
               onClick={handleGoogleSignIn}
               disabled={googleLoading || loading}
-              className="flex w-full h-11 items-center justify-center gap-2 rounded border border-[#cbd5e1] dark:border-[#334155] bg-[#f8fafc] dark:bg-[#0f172a] hover:bg-[#e2e8f0] dark:hover:bg-[#1e3a5f] px-6 font-bold text-[#475569] dark:text-[#cbd5e1] text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex w-full h-11 items-center justify-center gap-2.5 rounded-xl border border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] hover:bg-[#eaf5ed] dark:hover:bg-[#30363d] hover:border-emerald-500 dark:hover:border-emerald-500 px-6 font-bold text-[#4a5568] dark:text-[#c9d1d9] text-[13px] transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
             >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="24px" height="24px">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-            </svg>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="18px" height="18px">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
               {googleLoading ? "Redirecting..." : "Continue with Google"}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-[#64748b] dark:text-[#94a3b8] mt-6 font-semibold">
+        {/* Signup Link */}
+        <p className="text-center text-[12px] text-[#4a5568] dark:text-[#8b949e] mt-5 font-medium">
           New to Heapify?{" "}
           <Link
             href="/signup"
-            className="text-[#3b5998] dark:text-[#7dd3fc] font-bold hover:underline transition-colors ml-1"
+            className="text-emerald-600 dark:text-emerald-400 font-bold hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline transition-colors ml-1"
           >
             Create account
           </Link>
         </p>
 
-        <footer className="text-[11px] font-semibold text-[#94a3b8] dark:text-[#64748b] text-center w-full mt-8">
+        {/* Footer */}
+        <footer className="text-[10px] font-semibold text-[#718096] dark:text-[#8b949e] text-center w-full mt-6">
           &copy; 2026 Heapify Labs. Secure & Encrypted.
         </footer>
     </div>

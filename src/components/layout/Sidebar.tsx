@@ -61,69 +61,73 @@ const DSASidebar: React.FC<SidebarProps> = ({
       className={`transition-all duration-300 flex overflow-hidden shrink-0 ${isSidebarOpen ? "w-[18.5rem]" : "w-0"
         }`}
     >
-      <aside className="w-72 flex flex-col bg-[#fff] dark:bg-[#0f172a] my-2 ml-2 rounded-lg border border-[#cbd5e1] dark:border-[#1e3a5f] shadow-sm dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)] overflow-hidden transition-colors duration-300">
+      {/* Sidebar Container: Light mode has green tint border, Dark mode has neutral slate background/border */}
+      <aside className="w-72 flex flex-col bg-white dark:bg-[#161b22] my-2 ml-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm overflow-hidden transition-colors duration-300">
+        
         {/* Header */}
-        <div className="flex items-center gap-2 px-5 py-4 border-b border-[#e2e8f0] dark:border-[#1e3a5f]">
-          <div className="text-[#3b5998] dark:text-[#7dd3fc]">{subjectIcon}</div>
-          <span className="text-xs font-bold text-[#334155] dark:text-[#f8fafc] tracking-tight">{subjectTitle}</span>
+        <div className="flex items-center gap-2.5 px-6 py-4 border-b border-[#d1e8d8] dark:border-[#30363d]">
+          <div className="text-emerald-600 dark:text-emerald-400 p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
+            {subjectIcon}
+          </div>
+          <span className="text-sm font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">{subjectTitle}</span>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <nav className="flex-1 overflow-y-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {/* Dashboard Button */}
           <button
             onClick={handleDashboardClick}
-            className={`w-full flex items-center gap-2.5 px-5 py-2.5 text-xs font-semibold transition-all ${view === "dashboard"
-                ? "bg-blue-50 dark:bg-blue-900/30 text-[#3b5998] dark:text-[#7dd3fc] border-r-2 border-[#3b5998] dark:border-[#7dd3fc]"
-                : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#1e293b]"
+            className={`w-full flex items-center gap-3 px-6 py-3 text-[13px] font-bold transition-all ${view === "dashboard"
+                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 dark:border-emerald-500"
+                : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
               }`}
           >
-            <FiPieChart size={13} />
+            <FiPieChart size={14} />
             <span>Overview</span>
           </button>
 
           {/* Section Label */}
-          <div className="text-[9px] font-bold text-[#64748b] dark:text-[#94a3b8] uppercase tracking-[0.15em] px-5 py-2 mt-2">
+          <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-[0.15em] px-6 py-3 mt-2">
             Topic Library
           </div>
 
           {/* Topics */}
-          <div className="space-y-0.5 px-3">
+          <div className="space-y-1 px-4">
             {dsaTopics.map((topic) => (
               <div key={topic.id}>
                 <button
                   onClick={() => handleTopicClick(topic.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all ${activeTopicId === topic.id
-                      ? "bg-blue-50 dark:bg-blue-900/30 text-[#3b5998] dark:text-[#7dd3fc]"
-                      : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#1e293b]"
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${activeTopicId === topic.id
+                      ? "bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                      : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
                     }`}
                 >
-                  <div className="flex items-center gap-2.5">
+                  <div className="flex items-center gap-3">
                     <FiLayers
-                      size={12}
+                      size={14}
                       className={
                         activeTopicId === topic.id
-                          ? "text-[#3b5998] dark:text-[#7dd3fc]"
-                          : "text-[#64748b] dark:text-[#94a3b8]"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-[#a0aec0] dark:text-[#64748b]"
                       }
                     />
                     <span>{topic.name}</span>
                   </div>
                   {expandedTopics.has(topic.id) ? (
-                    <FiChevronDown size={10} className="text-[#64748b] dark:text-[#94a3b8]" />
+                    <FiChevronDown size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
                   ) : (
-                    <FiChevronRight size={10} className="text-[#64748b] dark:text-[#94a3b8]" />
+                    <FiChevronRight size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
                   )}
                 </button>
 
                 {expandedTopics.has(topic.id) && (
-                  <div className="ml-4 mt-0.5 mb-1 space-y-0.5 border-l border-[#e2e8f0] dark:border-[#1e3a5f] pl-2">
+                  <div className="ml-5 mt-1 mb-2 space-y-1 border-l-2 border-[#e8f5ee] dark:border-[#30363d] pl-2.5">
                     {(patternsCache.get(topic.id) ?? []).map((p) => (
                       <button
                         key={p.id}
                         onClick={() => handlePatternClick(p.id)}
-                        className={`block w-full text-left px-3 py-1.5 text-[11px] rounded-md transition-all ${activePatternId === p.id
-                            ? "text-[#3b5998] dark:text-[#7dd3fc] bg-blue-50 dark:bg-blue-900/30 font-semibold"
-                            : "text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#1e293b]"
+                        className={`block w-full text-left px-3 py-2 text-[12px] rounded-lg transition-all ${activePatternId === p.id
+                            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 font-bold"
+                            : "text-[#4a5568] dark:text-[#8b949e] font-semibold hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
                           }`}
                       >
                         {p.name}
@@ -137,21 +141,22 @@ const DSASidebar: React.FC<SidebarProps> = ({
         </nav>
 
         {/* Bottom links to other subjects */}
-        <div className="border-t border-[#e2e8f0] dark:border-[#1e3a5f] p-2 space-y-0.5">
-          <div className="text-[9px] font-bold text-[#64748b] dark:text-[#94a3b8] uppercase tracking-[0.15em] px-3 py-1.5">
+        {/* Light mode: distinct white/greenish | Dark mode: Clean matching dark (#161b22) */}
+        <div className="border-t border-[#d1e8d8] dark:border-[#30363d] p-3 space-y-1 bg-[#fcfdfd] dark:bg-[#161b22]">
+          <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-[0.15em] px-3 py-2">
             Other Subjects
           </div>
           {[
-                      { label: "OS", href: "/learning/os", icon: <FiCpu size={12} /> },
-            { label: "Networks (CN)", href: "/learning/networks", icon: <FiWifi size={12} /> },
-            { label: "DBMS", href: "/learning/dbms", icon: <FiDatabase size={12} /> },
-            { label: "Git", href: "/learning/git", icon: <FiGitBranch size={12} /> },
-            { label: "Dashboard", href: "/dashboard", icon: <FiBookOpen size={12} /> },
+            { label: "OS", href: "/learning/os", icon: <FiCpu size={14} /> },
+            { label: "Networks (CN)", href: "/learning/networks", icon: <FiWifi size={14} /> },
+            { label: "DBMS", href: "/learning/dbms", icon: <FiDatabase size={14} /> },
+            { label: "Git", href: "/learning/git", icon: <FiGitBranch size={14} /> },
+            { label: "Dashboard", href: "/dashboard", icon: <FiBookOpen size={14} /> },
           ].map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-[#64748b] dark:text-[#94a3b8] hover:text-[#334155] dark:hover:text-[#cbd5e1] hover:bg-[#e2e8f0] dark:hover:bg-[#1e293b] transition-all"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-[#f4fcf7] dark:hover:bg-[#21262d] transition-all"
             >
               {item.icon}
               {item.label}

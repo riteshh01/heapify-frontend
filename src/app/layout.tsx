@@ -11,21 +11,21 @@ export const metadata: Metadata = {
   title: "Heapify - Master Your Software Engineering Interviews",
   description: "Prepare for software engineering interviews with DSA, System Design, DBMS, OS, and Networks",
   icons: {
-    icon: "/heapify_logo.jpg",
-    apple: "/heapify_logo.jpg",
+    icon: "/heapify_logo.png",
+    apple: "/heapify_logo.png",
   },
 };
 
 export const icon = () => {
   return {
-    url: "/heapify_logo.jpg",
+    url: "/heapify_logo.png",
     type: "image/jpg",
   };
 };
 
 export const apple = () => {
   return {
-    url: "/heapify_logo.jpg",
+    url: "/heapify_logo.png",
     type: "image/jpg",
   };
 };
