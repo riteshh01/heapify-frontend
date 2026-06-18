@@ -1,16 +1,17 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useContext } from "react";
+import React, { useState, useMemo, useEffect, useRef, useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import {
   fetchTopics,
   fetchPatterns,
   fetchProblems,
-  fetchProgress,
+  fetchProgressSummary,
   toggleProblem,
   KnowledgeTopic,
   KnowledgePattern,
   KnowledgeProblem,
+  ProgressSummary,
 } from "@/services/knowledgeService";
 import {
   FiMenu,
@@ -24,12 +25,13 @@ import {
 import DSASidebar from "@/components/layout/Sidebar";
 import Spinner from "@/components/loading/Spinner";
 
-// ─── Interfaces ──────────────────────────────────────────────────────────────
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 
 interface DashboardViewProps {
   dsaTopics: KnowledgeTopic[];
   solvedProblems: Set<string | number>;
   totalProblemsCount: number;
+  progressSummary: ProgressSummary | null;
   getTopicStats: (topic: KnowledgeTopic) => { total: number; solved: number; percent: number };
   handleTopicClick: (topicId: string | number) => void;
 }
@@ -53,6 +55,7 @@ interface StatCardProps {
 const DSASheet: React.FC = () => {
   const authContext = useContext(AuthContext);
   const userData = authContext?.user;
+  const isAuthLoading = authContext?.isLoading ?? true;
 
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [view, setView] = useState<"dashboard" | "pattern">("dashboard");
@@ -69,6 +72,7 @@ const DSASheet: React.FC = () => {
     } catch {}
     return new Set<string | number>();
   });
+  const [progressSummary, setProgressSummary] = useState<ProgressSummary | null>(null);
   const [dsaTopics, setDsaTopics] = useState<KnowledgeTopic[]>([]);
   const [patternsCache, setPatternsCache] = useState<Map<string | number, KnowledgePattern[]>>(new Map());
   const [problemsCache, setProblemsCache] = useState<Map<string | number, KnowledgeProblem[]>>(new Map());
@@ -77,41 +81,68 @@ const DSASheet: React.FC = () => {
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // ── Fetch topics on mount ──────────────────────────────────────────────────
+  // ── Single-flight ref: prevents React 18 Strict Mode double-invocation ──────
+  // Strict Mode mounts → unmounts → remounts every component in dev, causing
+  // effects to run twice. This ref ensures we only fire the fetch once.
+  const hasFetchedRef = useRef(false);
+
+  // ── Single combined effect: waits for AuthContext to finish hydrating ───────
+  // We gate on `isAuthLoading === false` so we know definitively whether the
+  // user is logged in before deciding what to fetch. This replaces the two
+  // separate effects (topics on mount, progress on userData change) that
+  // caused the double-trigger bug.
   useEffect(() => {
+    // Still hydrating AuthContext — wait. Do not fire yet.
+    if (isAuthLoading) return;
+
+    // Strict Mode guard — prevent running twice in dev
+    if (hasFetchedRef.current) return;
+    hasFetchedRef.current = true;
+
+    const controller = new AbortController();
+
     const load = async () => {
       try {
         setIsDataLoading(true);
         setFetchError(null);
-        const topics = await fetchTopics();
-        setDsaTopics(topics);
+
+        if (userData) {
+          // Logged-in path: fetch topics + rich progress in parallel
+          const [topics, progressResult] = await Promise.all([
+            fetchTopics(),
+            fetchProgressSummary(),
+          ]);
+          setDsaTopics(topics);
+          setProgressSummary(progressResult.summary);
+          setSolvedProblems(progressResult.solvedSet);
+          try {
+            localStorage.setItem(
+              "dsa_solved_problems",
+              JSON.stringify(Array.from(progressResult.solvedSet))
+            );
+          } catch {}
+        } else {
+          // Guest path: only fetch topics (progress is auth-gated)
+          const topics = await fetchTopics();
+          setDsaTopics(topics);
+        }
       } catch (err: any) {
-        console.error("Failed to load DSA topics:", err);
-        setFetchError(err?.message || "Failed to load topics. Please check if the server is running.");
+        if (err?.name === "AbortError") return;
+        console.error("Failed to load DSA data:", err);
+        setFetchError(
+          err?.message || "Failed to load topics. Please check if the server is running."
+        );
       } finally {
         setIsDataLoading(false);
       }
     };
-    load();
-  }, []);
 
-  // ── Fetch user progress (JWT protected) ───────────────────────────────────
-  useEffect(() => {
-    if (!userData) return;
-    const load = async () => {
-      try {
-        const solved = await fetchProgress();
-        setSolvedProblems(solved);
-        // Sync localStorage with latest server data
-        try {
-          localStorage.setItem("dsa_solved_problems", JSON.stringify(Array.from(solved)));
-        } catch {}
-      } catch (err) {
-        console.error("Failed to load progress:", err);
-      }
-    };
     load();
-  }, [userData]);
+
+    return () => {
+      controller.abort();
+    };
+  }, [isAuthLoading, userData]);
 
   // ── Toggle problem solved status ──────────────────────────────────────────
   const updateSolvedProblems = async (problemId: string | number) => {
@@ -119,7 +150,7 @@ const DSASheet: React.FC = () => {
     const next = new Set(solvedProblems);
     next.has(problemId) ? next.delete(problemId) : next.add(problemId);
     setSolvedProblems(next);
-    
+
     try {
       localStorage.setItem("dsa_solved_problems", JSON.stringify(Array.from(next)));
     } catch {}
@@ -269,7 +300,7 @@ const DSASheet: React.FC = () => {
         patternsCache={patternsCache}
       />
 
-      {/* Main Content Area (Light: Mild Green / Dark: Neutral #161b22 exactly like sidebar) */}
+      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative bg-[#f4fcf7] dark:bg-[#161b22] m-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm transition-colors duration-300 [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]">
 
         {/* Header */}
@@ -298,6 +329,7 @@ const DSASheet: React.FC = () => {
               dsaTopics={dsaTopics}
               solvedProblems={solvedProblems}
               totalProblemsCount={totalProblemsCount}
+              progressSummary={progressSummary}
               getTopicStats={getTopicStats}
               handleTopicClick={handleTopicClick}
             />
@@ -322,6 +354,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   dsaTopics,
   solvedProblems,
   totalProblemsCount,
+  progressSummary,
   getTopicStats,
   handleTopicClick,
 }) => (
@@ -341,12 +374,16 @@ const DashboardView: React.FC<DashboardViewProps> = ({
       <StatCard label="Solved" value={solvedProblems.size} borderColor="#059669" />
       <StatCard
         label="Completion"
-        value={`${totalProblemsCount > 0
+        value={`${progressSummary?.completionPercent ?? (totalProblemsCount > 0
           ? Math.round((solvedProblems.size / totalProblemsCount) * 100)
-          : 0}%`}
+          : 0)}%`}
         borderColor="#0ea5e9"
       />
-      <StatCard label="Topics" value={dsaTopics.length} borderColor="#f59e0b" />
+      <StatCard
+        label="🔥 Streak"
+        value={progressSummary ? `${progressSummary.streak.current}d` : `${dsaTopics.length} topics`}
+        borderColor="#f59e0b"
+      />
     </div>
 
     {/* Topics grid */}
@@ -359,7 +396,13 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {dsaTopics.map((topic) => {
-          const stats = getTopicStats(topic);
+          // Prefer server-side per-topic stats from progressSummary when available
+          const serverStats = progressSummary?.byTopic.find(
+            (t) => String(t.topicId) === String(topic.id)
+          );
+          const stats = serverStats
+            ? { total: serverStats.total, solved: serverStats.solved, percent: serverStats.percent }
+            : getTopicStats(topic);
           return (
             <div
               key={topic.id}
@@ -374,7 +417,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
                   {stats.percent}%
                 </span>
               </div>
-              
+
               <div className="w-full h-2 bg-[#e8f5ee] dark:bg-[#0d1117] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-emerald-500 dark:bg-emerald-500 rounded-full transition-all duration-700"
@@ -441,7 +484,7 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
                   <span className="text-[11px] font-bold text-[#a0aec0] dark:text-[#8b949e] w-5 text-right shrink-0">
                     {idx + 1}
                   </span>
-                  
+
                   <button
                     onClick={() => onToggle(prob.id)}
                     className="transition-all hover:scale-110 shrink-0 outline-none"
@@ -452,7 +495,7 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
                       <FiCircle className="text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-500 dark:hover:text-emerald-500 transition-colors" size={20} />
                     )}
                   </button>
-                  
+
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
                     <a
                       href={prob.problemLink}
@@ -477,8 +520,8 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
                     </span>
                   </div>
                 </div>
-                
-                <a 
+
+                <a
                   href={prob.problemLink}
                   target="_blank"
                   rel="noopener noreferrer"

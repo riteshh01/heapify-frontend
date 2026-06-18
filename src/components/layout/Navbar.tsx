@@ -17,7 +17,7 @@ const SUBJECT_LINKS = [
   { label: "CN", href: "/learning/networks" },
   { label: "DBMS", href: "/learning/dbms" },
   { label: "System Design", href: "/learning/system-design" },
-  { label: "Git", href: "/learning/git" }, 
+  { label: "Git", href: "/learning/git" },
 ];
 
 export function Navbar() {
@@ -72,28 +72,43 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-[#e2e8f0] dark:border-[#30363d] bg-[#f4fbf6] dark:bg-[#161b22] transition-colors duration-300">
       <div className="flex items-center justify-between px-6 py-3 max-w-7xl mx-auto w-full">
 
-        {/* Solid Green Logo */}
-        <Link href={isLoggedIn ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-80 transition-opacity shrink-0 group">
-          <div className="h-8 w-8 rounded-xl bg-emerald-600 dark:bg-emerald-500 flex items-center justify-center font-bold text-white text-sm tracking-tighter shadow-md group-hover:scale-105 transition-transform">
+        {/* Logo */}
+
+        <Link
+
+          href={isLoggedIn ? "/dashboard" : "/"}
+
+          className="group flex shrink-0 items-center gap-2.5"
+
+        >
+
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold tracking-tighter text-white shadow-md transition-transform duration-200 group-hover:scale-105 transform-gpu dark:bg-emerald-500">
+
             H
+
           </div>
-          <span className="font-bold text-base tracking-tight text-emerald-700 dark:text-emerald-400">
+
+          <span className="text-base font-bold tracking-tight text-emerald-700 dark:text-emerald-400">
+
             Heapify.
+
           </span>
+
         </Link>
 
-        {/* Subject Tabs — only when logged in (desktop) */}
+        {/* Navigation */}
+
         {isLoggedIn && (
-          <nav className="hidden md:flex items-center gap-1.5">
+          <nav className="hidden items-center gap-1.5 md:flex">
             {SUBJECT_LINKS.map((link) => {
               const isActive = pathname?.startsWith(link.href);
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 ${isActive
-                    ? "bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 shadow-sm"
-                    : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#c9d1d9] hover:bg-[#eaf5ed] dark:hover:bg-[#21262d]"
+                  className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${isActive
+                      ? "border-emerald-200 bg-emerald-100 text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                      : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     }`}
                 >
                   {link.label}
@@ -120,7 +135,7 @@ export function Navbar() {
 
         {/* Right side controls */}
         <div className="flex items-center gap-3">
-          
+
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
@@ -146,7 +161,7 @@ export function Navbar() {
                 </span>
                 Dashboard
               </Link>
-              
+
               {/* Sign out button */}
               <button
                 onClick={handleLogout}
@@ -188,11 +203,12 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all ${isActive
-                      ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800/30"
-                      : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#c9d1d9] hover:bg-[#f0f3f6] dark:hover:bg-[#21262d]"
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-colors duration-200 border
+        ${isActive
+                        ? "bg-emerald-100/80 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                        : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#c9d1d9] hover:bg-[#eaf5ed] dark:hover:bg-[#21262d] border-transparent"
                       }`}
+                    style={{ boxSizing: 'border-box' }} // Ensure size kabhi change na ho
                   >
                     {link.label}
                   </Link>

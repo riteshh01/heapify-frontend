@@ -6,6 +6,7 @@
  *   GET  /knowledge/patterns/:topicId
  *   GET  /knowledge/problems/:patternId
  *   GET  /knowledge/progress          (auth required)
+ *   GET  /knowledge/progress/summary  (auth required — rich metadata)
  *   POST /knowledge/progress/toggle   (auth required)
  */
 
@@ -52,6 +53,50 @@ export interface ProgressRow {
   completed: boolean;
 }
 
+export interface DifficultyStats {
+  solved: number;
+  total: number;
+}
+
+export interface TopicProgress {
+  topicId: string | number;
+  topicName: string;
+  solved: number;
+  total: number;
+  percent: number;
+}
+
+export interface RecentActivityItem {
+  problemId: string | number;
+  title: string;
+  difficulty: string;
+  topicName: string;
+  solvedAt: string | null;
+}
+
+export interface ProgressSummary {
+  totalSolved: number;
+  totalProblems: number;
+  completionPercent: number;
+  streak: { current: number; longest: number };
+  byDifficulty: {
+    easy: DifficultyStats;
+    medium: DifficultyStats;
+    hard: DifficultyStats;
+  };
+  byTopic: TopicProgress[];
+  recentActivity: RecentActivityItem[];
+  lastSolvedAt: string | null;
+  memberSince: string | null;
+}
+
+/** Shape returned by fetchProgressSummary — both the rich summary AND the solved Set */
+export interface ProgressSummaryResult {
+  summary: ProgressSummary;
+  /** Pre-built Set of solved problem IDs — drop-in replacement for the old fetchProgress result */
+  solvedSet: Set<string | number>;
+}
+
 // ── API calls ────────────────────────────────────────────────────────────────
 
 /** GET /knowledge/topics — fetch all DSA topics */
@@ -92,6 +137,30 @@ export async function fetchProgress(): Promise<Set<string | number>> {
       .map((row) => row.problem_id)
   );
   return solved;
+}
+
+/**
+ * GET /knowledge/progress/summary — fetch rich progress metadata (JWT protected)
+ *
+ * Returns both the structured `summary` and a pre-built `solvedSet` for use
+ * directly in the DSA sheet as checkbox state — replaces the need to call
+ * fetchProgress() separately.
+ */
+export async function fetchProgressSummary(): Promise<ProgressSummaryResult> {
+  const { data } = await axios.get(
+    `${API_BASE}/knowledge/progress/summary`,
+    withCreds
+  );
+  if (!data.success) throw new Error(data.message || "Failed to fetch progress summary");
+
+  const solvedSet = new Set<string | number>(
+    (data.progress as ProgressRow[]).map((r) => r.problem_id)
+  );
+
+  return {
+    summary: data.summary as ProgressSummary,
+    solvedSet,
+  };
 }
 
 /** POST /knowledge/progress/toggle — toggle solved status (JWT protected) */
