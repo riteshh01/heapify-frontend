@@ -7,10 +7,12 @@ import {
   fetchPatterns,
   fetchProblems,
   fetchProgressSummary,
+  fetchProblemTags,
   toggleProblem,
   KnowledgeTopic,
   KnowledgePattern,
   KnowledgeProblem,
+  ProblemTag,
   ProgressSummary,
 } from "@/services/knowledgeService";
 import {
@@ -21,7 +23,11 @@ import {
   FiExternalLink,
   FiTrendingUp,
   FiAlertCircle,
+  FiFileText,
+  FiTag,
+  FiChevronDown,
 } from "react-icons/fi";
+import { HiOfficeBuilding } from "react-icons/hi";
 import DSASidebar from "@/components/layout/Sidebar";
 import Spinner from "@/components/loading/Spinner";
 
@@ -49,6 +55,8 @@ interface StatCardProps {
   value: string | number;
   borderColor: string;
 }
+
+type ExpandSection = "notes" | "companies" | "topic";
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -82,20 +90,10 @@ const DSASheet: React.FC = () => {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // ── Single-flight ref: prevents React 18 Strict Mode double-invocation ──────
-  // Strict Mode mounts → unmounts → remounts every component in dev, causing
-  // effects to run twice. This ref ensures we only fire the fetch once.
   const hasFetchedRef = useRef(false);
 
-  // ── Single combined effect: waits for AuthContext to finish hydrating ───────
-  // We gate on `isAuthLoading === false` so we know definitively whether the
-  // user is logged in before deciding what to fetch. This replaces the two
-  // separate effects (topics on mount, progress on userData change) that
-  // caused the double-trigger bug.
   useEffect(() => {
-    // Still hydrating AuthContext — wait. Do not fire yet.
     if (isAuthLoading) return;
-
-    // Strict Mode guard — prevent running twice in dev
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
@@ -107,7 +105,6 @@ const DSASheet: React.FC = () => {
         setFetchError(null);
 
         if (userData) {
-          // Logged-in path: fetch topics + rich progress in parallel
           const [topics, progressResult] = await Promise.all([
             fetchTopics(),
             fetchProgressSummary(),
@@ -122,7 +119,6 @@ const DSASheet: React.FC = () => {
             );
           } catch {}
         } else {
-          // Guest path: only fetch topics (progress is auth-gated)
           const topics = await fetchTopics();
           setDsaTopics(topics);
         }
@@ -396,7 +392,6 @@ const DashboardView: React.FC<DashboardViewProps> = ({
     ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {dsaTopics.map((topic) => {
-          // Prefer server-side per-topic stats from progressSummary when available
           const serverStats = progressSummary?.byTopic.find(
             (t) => String(t.topicId) === String(topic.id)
           );
@@ -435,6 +430,257 @@ const DashboardView: React.FC<DashboardViewProps> = ({
   </div>
 );
 
+// ─── Expandable Problem Row ───────────────────────────────────────────────────
+
+interface ProblemRowProps {
+  prob: KnowledgeProblem;
+  idx: number;
+  isSolved: boolean;
+  onToggle: (id: string | number) => void;
+  expandedRowId: string | number | null;
+  expandedSection: ExpandSection | null;
+  onExpand: (probId: string | number, section: ExpandSection) => void;
+  tagsCache: Map<string | number, ProblemTag[]>;
+  loadingTagIds: Set<string | number>;
+}
+
+const ProblemRow: React.FC<ProblemRowProps> = ({
+  prob,
+  idx,
+  isSolved,
+  onToggle,
+  expandedRowId,
+  expandedSection,
+  onExpand,
+  tagsCache,
+  loadingTagIds,
+}) => {
+  const isExpanded = expandedRowId === prob.id;
+  const hasNotes = Boolean(prob.notes?.trim());
+  const tags = tagsCache.get(prob.id) ?? [];
+  const companyTags = tags.filter((t) => t.tag_type === "company");
+  const topicTags = tags.filter((t) => t.tag_type === "topic");
+  const isLoadingTags = loadingTagIds.has(prob.id);
+
+  return (
+    <div
+      className={`border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 transition-colors duration-200 ${
+        isExpanded ? "bg-[#f0faf4] dark:bg-[#1c2630]" : "hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50"
+      }`}
+    >
+      {/* Main row */}
+      <div className="px-6 py-4 flex items-center gap-3 group">
+        {/* Index */}
+        <span className="text-[11px] font-bold text-[#a0aec0] dark:text-[#8b949e] w-5 text-right shrink-0">
+          {idx + 1}
+        </span>
+
+        {/* Checkbox */}
+        <button
+          onClick={() => onToggle(prob.id)}
+          className="transition-all hover:scale-110 shrink-0 outline-none"
+          title={isSolved ? "Mark as unsolved" : "Mark as solved"}
+        >
+          {isSolved ? (
+            <FiCheckCircle className="text-emerald-500 dark:text-emerald-400" size={20} />
+          ) : (
+            <FiCircle className="text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-500 dark:hover:text-emerald-500 transition-colors" size={20} />
+          )}
+        </button>
+
+        {/* Title + Difficulty */}
+        <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2 min-w-0">
+          <a
+            href={prob.problemLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`text-sm font-bold transition-all truncate ${
+              isSolved
+                ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
+                : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
+            }`}
+          >
+            {prob.title}
+          </a>
+          <span
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border ${
+              prob.difficulty === "easy"
+                ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
+                : prob.difficulty === "medium"
+                ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
+                : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
+            }`}
+          >
+            {prob.difficulty}
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 ml-1">
+          {/* Notes button — only show if notes exist */}
+          {hasNotes && (
+            <button
+              onClick={() => onExpand(prob.id, "notes")}
+              title="View notes"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+                isExpanded && expandedSection === "notes"
+                  ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
+                  : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
+              }`}
+            >
+              <FiFileText size={10} />
+              Notes
+              <FiChevronDown
+                size={9}
+                className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`}
+              />
+            </button>
+          )}
+
+          {/* Companies button */}
+          <button
+            onClick={() => onExpand(prob.id, "companies")}
+            title="View company tags"
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+              isExpanded && expandedSection === "companies"
+                ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
+                : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
+            }`}
+          >
+            <HiOfficeBuilding size={10} />
+            Companies
+            <FiChevronDown
+              size={9}
+              className={`transition-transform duration-200 ${isExpanded && expandedSection === "companies" ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {/* Topic tags button */}
+          <button
+            onClick={() => onExpand(prob.id, "topic")}
+            title="View topic tags"
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+              isExpanded && expandedSection === "topic"
+                ? "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
+                : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:text-orange-400"
+            }`}
+          >
+            <FiTag size={10} />
+            Topics
+            <FiChevronDown
+              size={9}
+              className={`transition-transform duration-200 ${isExpanded && expandedSection === "topic" ? "rotate-180" : ""}`}
+            />
+          </button>
+
+          {/* External link */}
+          <a
+            href={prob.problemLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Open problem"
+            className="p-1.5 rounded-lg text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
+          >
+            <FiExternalLink size={14} />
+          </a>
+        </div>
+      </div>
+
+      {/* Expandable detail panel */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${
+          isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+        }`}
+      >
+        <div className="px-6 pb-5 pt-1">
+          {/* Notes section */}
+          {expandedSection === "notes" && (
+            <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FiFileText size={12} className="text-violet-600 dark:text-violet-400" />
+                <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
+                  Notes
+                </span>
+              </div>
+              <p className="text-sm text-[#374151] dark:text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
+                {prob.notes || "No notes available."}
+              </p>
+            </div>
+          )}
+
+          {/* Companies section */}
+          {expandedSection === "companies" && (
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <HiOfficeBuilding size={12} className="text-blue-600 dark:text-blue-400" />
+                <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                  Asked By Companies
+                </span>
+              </div>
+              {isLoadingTags ? (
+                <div className="flex items-center gap-2 text-sm text-blue-500 dark:text-blue-400">
+                  <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  Loading...
+                </div>
+              ) : companyTags.length === 0 ? (
+                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">
+                  No company tags for this problem yet.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {companyTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Topic tags section */}
+          {expandedSection === "topic" && (
+            <div className="rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <FiTag size={12} className="text-orange-600 dark:text-orange-400" />
+                <span className="text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
+                  Topic Tags
+                </span>
+              </div>
+              {isLoadingTags ? (
+                <div className="flex items-center gap-2 text-sm text-orange-500 dark:text-orange-400">
+                  <div className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+                  Loading...
+                </div>
+              ) : topicTags.length === 0 ? (
+                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">
+                  No topic tags for this problem yet.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {topicTags.map((tag) => (
+                    <span
+                      key={tag.id}
+                      className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Pattern Detail View ──────────────────────────────────────────────────────
+
 const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   activePattern,
   problems,
@@ -442,15 +688,59 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   solvedProblems,
   onToggle,
 }) => {
+  const [expandedRowId, setExpandedRowId] = useState<string | number | null>(null);
+  const [expandedSection, setExpandedSection] = useState<ExpandSection | null>(null);
+  const [tagsCache, setTagsCache] = useState<Map<string | number, ProblemTag[]>>(new Map());
+  const [loadingTagIds, setLoadingTagIds] = useState<Set<string | number>>(new Set());
+
+  // Reset expansion when pattern changes
+  useEffect(() => {
+    setExpandedRowId(null);
+    setExpandedSection(null);
+  }, [activePattern?.id]);
+
+  const handleExpand = async (probId: string | number, section: ExpandSection) => {
+    // Toggle off if same row + same section
+    if (expandedRowId === probId && expandedSection === section) {
+      setExpandedRowId(null);
+      setExpandedSection(null);
+      return;
+    }
+
+    // Switch row or section
+    setExpandedRowId(probId);
+    setExpandedSection(section);
+
+    // Fetch tags lazily for companies / topic sections
+    if ((section === "companies" || section === "topic") && !tagsCache.has(probId)) {
+      setLoadingTagIds((prev) => new Set(prev).add(probId));
+      try {
+        const tags = await fetchProblemTags(probId);
+        setTagsCache((prev) => new Map(prev).set(probId, tags));
+      } catch (err) {
+        console.error("Failed to fetch tags:", err);
+        setTagsCache((prev) => new Map(prev).set(probId, []));
+      } finally {
+        setLoadingTagIds((prev) => {
+          const s = new Set(prev);
+          s.delete(probId);
+          return s;
+        });
+      }
+    }
+  };
+
   if (!activePattern) return null;
 
   if (isLoading)
     return (
       <div className="flex items-center justify-center py-20 gap-3">
-        <div className="w-5 h-5 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
         <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold">Loading problems...</p>
       </div>
     );
+
+  const solvedCount = problems.filter((p) => solvedProblems.has(p.id)).length;
 
   return (
     <div>
@@ -459,79 +749,57 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
         <p className="text-[11px] text-[#4a5568] dark:text-[#8b949e] uppercase font-bold tracking-[0.15em] mb-2">
           Pattern Breakdown
         </p>
-        <h1 className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{activePattern.name}</h1>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <h1 className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{activePattern.name}</h1>
+          <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50 shrink-0">
+            {solvedCount} / {problems.length} solved
+          </span>
+        </div>
         {activePattern.description && (
           <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mt-2 leading-relaxed">
             {activePattern.description}
           </p>
         )}
+        {/* Mini progress bar */}
+        {problems.length > 0 && (
+          <div className="mt-4 w-full h-1.5 bg-[#e8f5ee] dark:bg-[#0d1117] rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-700"
+              style={{ width: `${Math.round((solvedCount / problems.length) * 100)}%` }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Problems List */}
       <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm overflow-hidden">
+        {/* Column header */}
+        <div className="px-6 py-2.5 bg-[#f4fcf7] dark:bg-[#1c2228] border-b border-[#e8f5ee] dark:border-[#30363d] flex items-center gap-3">
+          <span className="w-5" />
+          <span className="w-5" />
+          <span className="flex-1 text-[10px] font-bold text-[#6b7280] dark:text-[#8b949e] uppercase tracking-wider">Problem</span>
+          <span className="text-[10px] font-bold text-[#6b7280] dark:text-[#8b949e] uppercase tracking-wider mr-1">Actions</span>
+        </div>
+
         {problems.length === 0 ? (
           <div className="p-10 text-center text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
             No problems found for this pattern.
           </div>
         ) : (
-          <div className="divide-y divide-[#e8f5ee] dark:divide-[#30363d]">
+          <div>
             {problems.map((prob, idx) => (
-              <div
+              <ProblemRow
                 key={prob.id}
-                className="px-6 py-4 flex items-center justify-between hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50 group transition-colors"
-              >
-                <div className="flex items-center gap-4 flex-1">
-                  <span className="text-[11px] font-bold text-[#a0aec0] dark:text-[#8b949e] w-5 text-right shrink-0">
-                    {idx + 1}
-                  </span>
-
-                  <button
-                    onClick={() => onToggle(prob.id)}
-                    className="transition-all hover:scale-110 shrink-0 outline-none"
-                  >
-                    {solvedProblems.has(prob.id) ? (
-                      <FiCheckCircle className="text-emerald-500 dark:text-emerald-400" size={20} />
-                    ) : (
-                      <FiCircle className="text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-500 dark:hover:text-emerald-500 transition-colors" size={20} />
-                    )}
-                  </button>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
-                    <a
-                      href={prob.problemLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`text-sm font-bold transition-all truncate ${solvedProblems.has(prob.id)
-                          ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
-                          : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
-                        }`}
-                    >
-                      {prob.title}
-                    </a>
-                    <span
-                      className={`text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wide shrink-0 border ${prob.difficulty === "easy"
-                          ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
-                          : prob.difficulty === "medium"
-                            ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
-                            : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
-                        }`}
-                    >
-                      {prob.difficulty}
-                    </span>
-                  </div>
-                </div>
-
-                <a
-                  href={prob.problemLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FiExternalLink
-                    className="text-[#a7c7b3] dark:text-[#64748b] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0 ml-3"
-                    size={16}
-                  />
-                </a>
-              </div>
+                prob={prob}
+                idx={idx}
+                isSolved={solvedProblems.has(prob.id)}
+                onToggle={onToggle}
+                expandedRowId={expandedRowId}
+                expandedSection={expandedSection}
+                onExpand={handleExpand}
+                tagsCache={tagsCache}
+                loadingTagIds={loadingTagIds}
+              />
             ))}
           </div>
         )}

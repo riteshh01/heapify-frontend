@@ -23,15 +23,18 @@ export const KNOWLEDGE_ENDPOINTS = {
   TOPIC_DATA:       (topicId: string | number) => `/knowledge/topics/${topicId}`,
   PATTERNS:         (topicId: string | number) => `/knowledge/patterns/${topicId}`,
   PROBLEMS:         (patternId: string | number) => `/knowledge/problems/${patternId}`,
+  PROBLEM_TAGS:     (problemId: string | number) => `/knowledge/problems/${problemId}/tags`,
   PROGRESS:         "/knowledge/progress",
   TOGGLE_PROGRESS:  "/knowledge/progress/toggle",
 } as const;
 
 // ===== THEORY ENDPOINTS =====
 export const THEORY_ENDPOINTS = {
-  SUBJECTS:            "/theory/subjects",
-  CHAPTERS_BY_SUBJECT: (subjectId: string | number) => `/theory/subjects/${subjectId}/chapters`,
-  ARTICLE:             (articleId: string | number) => `/theory/articles/${articleId}`,
+  SUBJECTS:               "/theory/subjects",
+  CHAPTERS_BY_SUBJECT:    (subjectId: string | number) => `/theory/subjects/${subjectId}/chapters`,
+  CHAPTERS_BY_NAME:       (slug: string) => `/theory/subjects/name/${encodeURIComponent(slug)}/chapters`,
+  CHAPTERS_BY_CHAPTER_ID: (chapterId: string | number) => `/theory/chapters/${chapterId}/articles`,
+  ARTICLE:                (articleId: string | number) => `/theory/articles/${articleId}`,
 } as const;
 
 

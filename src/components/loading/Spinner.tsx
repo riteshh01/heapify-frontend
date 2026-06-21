@@ -33,7 +33,7 @@ const StyledWrapper = styled.div`
   .loader div {
     width: 8%;
     height: 24%;
-    background: rgb(128, 128, 128);
+    background: #009865; /* Yahan color update kiya gaya hai */
     position: absolute;
     left: 50%;
     top: 30%;
