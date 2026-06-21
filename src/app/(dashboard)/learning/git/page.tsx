@@ -15,6 +15,8 @@ import {
   FiPlay,
   FiChevronLeft,
   FiSearch,
+  FiTerminal,
+  FiInfo,
   FiX,
 } from "react-icons/fi";
 import Link from "next/link";
@@ -51,11 +53,10 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold transition-all shrink-0 ${
-        copied
+      className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold transition-all shrink-0 ${copied
           ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700"
           : "bg-[#21262d] text-[#8b949e] border border-[#30363d] hover:bg-[#30363d] hover:text-[#c9d1d9]"
-      }`}
+        }`}
       title="Copy to clipboard"
     >
       {copied ? <FiCheck size={9} /> : <FiCopy size={9} />}
@@ -83,23 +84,38 @@ interface ArticleJson {
 // ─── Command Row ──────────────────────────────────────────────────────────────
 function CommandRow({ cmd, description }: ArticleCommand) {
   return (
-    <div className="rounded-xl overflow-hidden border border-[#30363d] shadow-sm mb-3">
-      <div className="flex items-center justify-between bg-[#161b22] border-b border-[#30363d] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-          <span className="ml-2 text-[10px] font-bold text-[#7d8590] uppercase tracking-widest">bash</span>
-        </div>
-        <CopyButton text={cmd} />
+    <div className="group relative rounded-2xl overflow-hidden border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#161b22] shadow-sm mb-4 hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition-all duration-300">
+      
+      {/* 🟢 Top Bar (Adapts to Light/Dark Mode) */}
+      <div className="flex items-center justify-between bg-emerald-50/50 dark:bg-[#21262d] border-b border-[#d1e8d8] dark:border-[#30363d] px-4 py-2.5 transition-colors">
+         <div className="flex items-center gap-2">
+            <FiTerminal size={14} className="text-emerald-600 dark:text-emerald-400" />
+            <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300 tracking-widest uppercase">
+              Terminal
+            </span>
+         </div>
+         <CopyButton text={cmd} />
       </div>
-      <pre className="bg-[#0d1117] px-5 py-3.5 overflow-x-auto text-[13px] font-mono text-[#e6edf3] leading-relaxed [scrollbar-width:thin] [scrollbar-color:#21262d_transparent]">
-        <span className="text-[#7d8590] select-none mr-2">$</span>
-        <code className="text-[#79c0ff]">{cmd}</code>
-      </pre>
+
+      {/* 💻 Terminal Body (Always Dark for Authentic Feel) */}
+      <div className="p-4 bg-[#061409] dark:bg-[#040a06] overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#10b981_transparent]">
+         <div className="flex items-start font-mono text-[13px] leading-relaxed">
+            <span className="text-emerald-500 mr-3 select-none flex-shrink-0 mt-[1px]">
+              ➜
+            </span>
+            <code className="text-emerald-100 font-semibold whitespace-pre break-normal">
+              {cmd}
+            </code>
+         </div>
+      </div>
+
+      {/* 📝 Description Footer (Adapts to Light/Dark Mode) */}
       {description && (
-        <div className="bg-[#0d1117] border-t border-[#21262d] px-5 pb-3 pt-1">
-          <p className="text-[12px] text-[#8b949e] leading-5">{description}</p>
+        <div className="flex items-start gap-2.5 bg-white dark:bg-[#161b22] border-t border-[#d1e8d8] dark:border-[#30363d] px-4 py-3 transition-colors">
+           <FiInfo size={14} className="text-emerald-500 dark:text-emerald-600 mt-0.5 shrink-0" />
+           <p className="text-[12px] text-[#4a5568] dark:text-[#8b949e] font-medium leading-5">
+             {description}
+           </p>
         </div>
       )}
     </div>
@@ -201,11 +217,11 @@ function Highlight({ text, query }: { text: string; query: string }) {
 // ─── Chapter Cards Grid with Pagination ──────────────────────────────────────
 const accentColors = [
   { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
-  { bg: "bg-sky-100 dark:bg-sky-900/30",     text: "text-sky-600 dark:text-sky-400",         border: "border-sky-200 dark:border-sky-800/50",         hoverBorder: "hover:border-sky-500 dark:hover:border-sky-500" },
-  { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400", border: "border-violet-200 dark:border-violet-800/50",   hoverBorder: "hover:border-violet-500 dark:hover:border-violet-500" },
-  { bg: "bg-amber-100 dark:bg-amber-900/30",  text: "text-amber-600 dark:text-amber-400",    border: "border-amber-200 dark:border-amber-800/50",     hoverBorder: "hover:border-amber-500 dark:hover:border-amber-500" },
-  { bg: "bg-rose-100 dark:bg-rose-900/30",    text: "text-rose-600 dark:text-rose-400",      border: "border-rose-200 dark:border-rose-800/50",       hoverBorder: "hover:border-rose-500 dark:hover:border-rose-500" },
-  { bg: "bg-teal-100 dark:bg-teal-900/30",    text: "text-teal-600 dark:text-teal-400",      border: "border-teal-200 dark:border-teal-800/50",       hoverBorder: "hover:border-teal-500 dark:hover:border-teal-500" },
+  { bg: "bg-sky-100 dark:bg-sky-900/30", text: "text-sky-600 dark:text-sky-400", border: "border-sky-200 dark:border-sky-800/50", hoverBorder: "hover:border-sky-500 dark:hover:border-sky-500" },
+  { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400", border: "border-violet-200 dark:border-violet-800/50", hoverBorder: "hover:border-violet-500 dark:hover:border-violet-500" },
+  { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-800/50", hoverBorder: "hover:border-amber-500 dark:hover:border-amber-500" },
+  { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-800/50", hoverBorder: "hover:border-rose-500 dark:hover:border-rose-500" },
+  { bg: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-600 dark:text-teal-400", border: "border-teal-200 dark:border-teal-800/50", hoverBorder: "hover:border-teal-500 dark:hover:border-teal-500" },
 ];
 
 function ChapterCard({
@@ -225,8 +241,8 @@ function ChapterCard({
   // When searching: show all matching articles; otherwise preview first 3
   const displayArticles = searchQuery.trim()
     ? chapter.articles.filter((a) =>
-        a.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      a.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     : chapter.articles.slice(0, 3);
 
   const hiddenCount = !searchQuery.trim() && chapter.articles.length > 3
@@ -320,12 +336,12 @@ function ChaptersGrid({
   // When searching: filter chapters that match by name OR have matching articles
   const filteredChapters = isSearching
     ? chapters.filter(
-        (c) =>
-          c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.articles.some((a) =>
-            a.title.toLowerCase().includes(searchQuery.toLowerCase())
-          )
-      )
+      (c) =>
+        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        c.articles.some((a) =>
+          a.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+    )
     : chapters;
 
   const totalPages = Math.ceil(filteredChapters.length / CHAPTERS_PER_PAGE);
@@ -337,13 +353,13 @@ function ChaptersGrid({
 
   const matchCount = isSearching
     ? filteredChapters.reduce(
-        (acc, c) =>
-          acc +
-          c.articles.filter((a) =>
-            a.title.toLowerCase().includes(searchQuery.toLowerCase())
-          ).length,
-        0
-      )
+      (acc, c) =>
+        acc +
+        c.articles.filter((a) =>
+          a.title.toLowerCase().includes(searchQuery.toLowerCase())
+        ).length,
+      0
+    )
     : 0;
 
   return (
@@ -439,11 +455,10 @@ function ChaptersGrid({
                     <button
                       key={page}
                       onClick={() => onPageChange(page)}
-                      className={`w-9 h-9 rounded-xl text-[12px] font-bold transition-all ${
-                        page === safePage
+                      className={`w-9 h-9 rounded-xl text-[12px] font-bold transition-all ${page === safePage
                           ? "bg-emerald-600 text-white shadow-sm"
                           : "bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400"
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>
@@ -737,24 +752,24 @@ export default function GitPage() {
   const totalArticles = chapters.reduce((acc, c) => acc + c.articles.length, 0);
 
   // ── Loading ──
-if (isChaptersLoading) {
-  return (
-    <div className="flex h-[calc(100vh-56px)] items-center justify-center">
-      <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
-        <Spinner aria-label="Loading content" />
-        
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-            Loading Git Content
-          </h3>
-          <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-            Fetching chapters and articles...
-          </p>
+  if (isChaptersLoading) {
+    return (
+      <div className="flex h-[calc(100vh-56px)] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
+          <Spinner aria-label="Loading content" />
+
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
+              Loading Git Content
+            </h3>
+            <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
+              Fetching chapters and articles...
+            </p>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // ── Error ──
   if (chaptersError) {

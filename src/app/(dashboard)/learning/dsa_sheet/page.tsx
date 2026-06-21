@@ -68,7 +68,7 @@ const DSASheet: React.FC = () => {
         const arr = JSON.parse(raw) as (string | number)[];
         return new Set(arr);
       }
-    } catch {}
+    } catch { }
     return new Set<string | number>();
   });
   const [progressSummary, setProgressSummary] = useState<ProgressSummary | null>(null);
@@ -108,7 +108,7 @@ const DSASheet: React.FC = () => {
               "dsa_solved_problems",
               JSON.stringify(Array.from(progressResult.solvedSet))
             );
-          } catch {}
+          } catch { }
         } else {
           const topics = await fetchTopics();
           setDsaTopics(topics);
@@ -140,7 +140,7 @@ const DSASheet: React.FC = () => {
 
     try {
       localStorage.setItem("dsa_solved_problems", JSON.stringify(Array.from(next)));
-    } catch {}
+    } catch { }
 
     try {
       await toggleProblem(problemId);
@@ -148,7 +148,7 @@ const DSASheet: React.FC = () => {
       setSolvedProblems(prev);
       try {
         localStorage.setItem("dsa_solved_problems", JSON.stringify(Array.from(prev)));
-      } catch {}
+      } catch { }
       console.error("Failed to save progress:", err);
     }
   };
@@ -232,21 +232,21 @@ const DSASheet: React.FC = () => {
   );
 
   // ── Loading state ─────────────────────────────────────────────────────────
-if (isDataLoading) {
-  return (
-    <div className="flex flex-col h-[calc(100vh-56px)] items-center justify-center gap-4 bg-[#e8f5ee] dark:bg-[#0d1117]">
-      <Spinner />
-      <div className="text-center">
-        <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-          Loading DSA Sheet
-        </h3>
-        <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-          Fetching problems, progress and statistics...
-        </p>
+  if (isDataLoading) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-56px)] items-center justify-center gap-4 bg-[#e8f5ee] dark:bg-[#0d1117]">
+        <Spinner />
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
+            Loading DSA Sheet
+          </h3>
+          <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
+            Fetching problems, progress and statistics...
+          </p>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   // ── Error state ───────────────────────────────────────────────────────────
   if (fetchError) {
@@ -339,9 +339,9 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
   const totalSolved = summary?.totalSolved ?? solvedProblems.size;
   const totalProblems = summary?.totalProblems ?? totalProblemsCount;
 
-  const easy   = summary?.byDifficulty.easy   ?? { solved: 0, total: 0 };
+  const easy = summary?.byDifficulty.easy ?? { solved: 0, total: 0 };
   const medium = summary?.byDifficulty.medium ?? { solved: 0, total: 0 };
-  const hard   = summary?.byDifficulty.hard   ?? { solved: 0, total: 0 };
+  const hard = summary?.byDifficulty.hard ?? { solved: 0, total: 0 };
 
   const overallPct = totalProblems > 0 ? (totalSolved / totalProblems) : 0;
 
@@ -350,7 +350,7 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
   function describeArc(cx: number, cy: number, r: number, pct: number, startAngle = -210, sweepAngle = 240) {
     const clamp = Math.min(Math.max(pct, 0), 0.9999);
     const start = (startAngle * Math.PI) / 180;
-    const end   = start + (sweepAngle * clamp * Math.PI) / 180;
+    const end = start + (sweepAngle * clamp * Math.PI) / 180;
     const x1 = cx + r * Math.cos(start);
     const y1 = cy + r * Math.sin(start);
     const x2 = cx + r * Math.cos(end);
@@ -418,9 +418,9 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
       {/* Difficulty legend + bars */}
       <div className="flex-1 space-y-5 w-full max-w-sm">
         {([
-          { label: "Easy",   data: easy,   color: "bg-emerald-500", track: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", badge: "bg-emerald-100/80 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/50" },
-          { label: "Medium", data: medium, color: "bg-amber-400",   track: "bg-amber-100 dark:bg-amber-900/30",   text: "text-amber-700 dark:text-amber-400",   badge: "bg-amber-100/80 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/50" },
-          { label: "Hard",   data: hard,   color: "bg-rose-500",    track: "bg-rose-100 dark:bg-rose-900/30",     text: "text-rose-700 dark:text-rose-400",     badge: "bg-rose-100/80 dark:bg-rose-900/40 border-rose-200 dark:border-rose-800/50" },
+          { label: "Easy", data: easy, color: "bg-emerald-500", track: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", badge: "bg-emerald-100/80 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/50" },
+          { label: "Medium", data: medium, color: "bg-amber-400", track: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", badge: "bg-amber-100/80 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/50" },
+          { label: "Hard", data: hard, color: "bg-rose-500", track: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-700 dark:text-rose-400", badge: "bg-rose-100/80 dark:bg-rose-900/40 border-rose-200 dark:border-rose-800/50" },
         ] as const).map(({ label, data, color, track, text, badge }) => {
           const pct = data.total > 0 ? Math.round((data.solved / data.total) * 100) : 0;
           return (
@@ -514,9 +514,8 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
 
   return (
     <div
-      className={`border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 transition-colors duration-200 ${
-        isExpanded ? "bg-[#f0faf4] dark:bg-[#1c2630]" : "hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50"
-      }`}
+      className={`border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 transition-colors duration-200 ${isExpanded ? "bg-[#f0faf4] dark:bg-[#1c2630]" : "hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50"
+        }`}
     >
       {/* Main row */}
       <div className="px-6 py-4 flex items-center gap-3 group">
@@ -544,22 +543,20 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
             href={prob.problemLink}
             target="_blank"
             rel="noopener noreferrer"
-            className={`text-sm font-bold transition-all truncate ${
-              isSolved
+            className={`text-sm font-bold transition-all truncate ${isSolved
                 ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
                 : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
-            }`}
+              }`}
           >
             {prob.title}
           </a>
           <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border ${
-              prob.difficulty === "easy"
+            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border ${prob.difficulty === "easy"
                 ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
                 : prob.difficulty === "medium"
-                ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
-                : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
-            }`}
+                  ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
+                  : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
+              }`}
           >
             {prob.difficulty}
           </span>
@@ -572,11 +569,10 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
             <button
               onClick={() => onExpand(prob.id, "notes")}
               title="View notes"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-                isExpanded && expandedSection === "notes"
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "notes"
                   ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
                   : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
-              }`}
+                }`}
             >
               <FiFileText size={10} />
               Notes
@@ -591,11 +587,10 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
           <button
             onClick={() => onExpand(prob.id, "companies")}
             title="View company tags"
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-              isExpanded && expandedSection === "companies"
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "companies"
                 ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
                 : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-            }`}
+              }`}
           >
             <HiOfficeBuilding size={10} />
             Companies
@@ -609,11 +604,10 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
           <button
             onClick={() => onExpand(prob.id, "topic")}
             title="View topic tags"
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-              isExpanded && expandedSection === "topic"
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "topic"
                 ? "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
                 : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:text-orange-400"
-            }`}
+              }`}
           >
             <FiTag size={10} />
             Topics
@@ -638,9 +632,8 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
 
       {/* Expandable detail panel */}
       <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${
-          isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-        }`}
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
       >
         <div className="px-6 pb-5 pt-1">
           {/* Notes section */}
@@ -784,20 +777,20 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
 
   if (isLoading)
     return (
-    <div className="flex h-[calc(100vh-56px)] items-center justify-center">
-      <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
-        <Spinner aria-label="Loading content" />
-        
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-            Loading Git Content
-          </h3>
-          <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-            Fetching chapters and articles...
-          </p>
+      <div className="flex h-[calc(100vh-56px)] items-center justify-center">
+        <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
+          <Spinner aria-label="Loading content" />
+
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
+              Loading Git Content
+            </h3>
+            <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
+              Fetching chapters and articles...
+            </p>
+          </div>
         </div>
       </div>
-    </div>
     );
 
   const solvedCount = problems.filter((p) => solvedProblems.has(p.id)).length;

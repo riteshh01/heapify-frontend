@@ -63,7 +63,7 @@ const DSASidebar: React.FC<SidebarProps> = ({
     >
       {/* Sidebar Container: Light mode has green tint border, Dark mode has neutral slate background/border */}
       <aside className="w-72 flex flex-col bg-white dark:bg-[#161b22] my-2 ml-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm overflow-hidden transition-colors duration-300">
-        
+
         {/* Header */}
         <div className="flex items-center gap-2.5 px-6 py-4 border-b border-[#d1e8d8] dark:border-[#30363d]">
           <div className="text-emerald-600 dark:text-emerald-400 p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
@@ -77,8 +77,8 @@ const DSASidebar: React.FC<SidebarProps> = ({
           <button
             onClick={handleDashboardClick}
             className={`w-full flex items-center gap-3 px-6 py-3 text-[13px] font-bold transition-all ${view === "dashboard"
-                ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 dark:border-emerald-500"
-                : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+              ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 dark:border-emerald-500"
+              : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
               }`}
           >
             <FiPieChart size={14} />
@@ -97,8 +97,8 @@ const DSASidebar: React.FC<SidebarProps> = ({
                 <button
                   onClick={() => handleTopicClick(topic.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${activeTopicId === topic.id
-                      ? "bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                      : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+                    ? "bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                    : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -126,8 +126,8 @@ const DSASidebar: React.FC<SidebarProps> = ({
                         key={p.id}
                         onClick={() => handlePatternClick(p.id)}
                         className={`block w-full text-left px-3 py-2 text-[12px] rounded-lg transition-all ${activePatternId === p.id
-                            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 font-bold"
-                            : "text-[#4a5568] dark:text-[#8b949e] font-semibold hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+                          ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 font-bold"
+                          : "text-[#4a5568] dark:text-[#8b949e] font-semibold hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
                           }`}
                       >
                         {p.name}
