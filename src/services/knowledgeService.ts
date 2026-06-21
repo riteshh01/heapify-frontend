@@ -64,6 +64,7 @@ export interface DifficultyStats {
   total: number;
 }
 
+// These are only populated by the full progress page, not the DSA sheet summary
 export interface TopicProgress {
   topicId: string | number;
   topicName: string;
@@ -83,17 +84,18 @@ export interface RecentActivityItem {
 export interface ProgressSummary {
   totalSolved: number;
   totalProblems: number;
-  completionPercent: number;
-  streak: { current: number; longest: number };
   byDifficulty: {
     easy: DifficultyStats;
     medium: DifficultyStats;
     hard: DifficultyStats;
   };
-  byTopic: TopicProgress[];
-  recentActivity: RecentActivityItem[];
-  lastSolvedAt: string | null;
-  memberSince: string | null;
+  // Optional fields — present when the richer progress endpoint is used
+  completionPercent?: number;
+  streak?: { current: number; longest: number };
+  byTopic?: TopicProgress[];
+  recentActivity?: RecentActivityItem[];
+  lastSolvedAt?: string | null;
+  memberSince?: string | null;
 }
 
 /** Shape returned by fetchProgressSummary — both the rich summary AND the solved Set */

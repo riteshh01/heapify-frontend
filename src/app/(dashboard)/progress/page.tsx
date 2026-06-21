@@ -182,8 +182,8 @@ export default function ProgressPage() {
   // Animated counters (0 when no data)
   const animSolved     = useCountUp(summary?.totalSolved ?? 0);
   const animPercent    = useCountUp(summary?.completionPercent ?? 0);
-  const animStreak     = useCountUp(summary?.streak.current ?? 0);
-  const animLongest    = useCountUp(summary?.streak.longest ?? 0);
+  const animStreak     = useCountUp(summary?.streak?.current ?? 0);
+  const animLongest    = useCountUp(summary?.streak?.longest ?? 0);
   const animTotal      = useCountUp(summary?.totalProblems ?? 0);
 
   if (isLoading || isAuthLoading) return <DashboardSkeleton />;
@@ -217,7 +217,8 @@ export default function ProgressPage() {
   }
 
   const d = summary!;
-  const byTopic = [...d.byTopic].sort((a, b) => b.percent - a.percent);
+  const byTopic = [...(d.byTopic ?? [])].sort((a, b) => b.percent - a.percent);
+  const recentActivity = d.recentActivity ?? [];
 
   return (
     <div className="p-6 md:p-8 space-y-8 max-w-6xl mx-auto">
@@ -228,7 +229,7 @@ export default function ProgressPage() {
           Your Progress
         </h1>
         <p className="text-[#64748b] dark:text-[#8b949e] mt-1 text-sm">
-          Member since {formatDate(d.memberSince)} · last solved {timeAgo(d.lastSolvedAt)}
+          Member since {formatDate(d.memberSince ?? null)} · last solved {timeAgo(d.lastSolvedAt ?? null)}
         </p>
       </div>
 
@@ -294,7 +295,7 @@ export default function ProgressPage() {
             Overall Progress
           </p>
           <div className="relative">
-            <CircularProgress percent={d.completionPercent} size={160} stroke={14} color="#10b981" />
+            <CircularProgress percent={d.completionPercent ?? 0} size={160} stroke={14} color="#10b981" />
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tabular-nums">
                 {animPercent}%
@@ -412,14 +413,14 @@ export default function ProgressPage() {
           </h2>
         </div>
 
-        {d.recentActivity.length === 0 ? (
+        {recentActivity.length === 0 ? (
           <div className="text-center py-8">
             <FiCalendar className="mx-auto text-[#d1e8d8] dark:text-[#30363d] mb-3" size={32} />
             <p className="text-sm text-[#94a3b8]">No problems solved yet. Start solving!</p>
           </div>
         ) : (
           <div className="divide-y divide-[#e8f5ee] dark:divide-[#30363d]">
-            {d.recentActivity.map((item, i) => (
+            {recentActivity.map((item, i) => (
               <div
                 key={item.problemId}
                 className="flex items-center justify-between py-3 gap-4 group"
