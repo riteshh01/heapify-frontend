@@ -38,6 +38,12 @@ export interface TheoryChapter {
   articles: TheoryArticleStub[];
 }
 
+export interface ArticleImage {
+  id: number;
+  imageUrl: string;
+  caption: string | null;
+}
+
 export interface TheoryArticle {
   id: number;
   chapterId: number;
@@ -51,6 +57,7 @@ export interface TheoryArticle {
   videoLink: string | null;
   coverImage: string | null;
   createdAt: string;
+  images: ArticleImage[];
 }
 
 /** Shape returned by fetchChaptersBySubjectName */

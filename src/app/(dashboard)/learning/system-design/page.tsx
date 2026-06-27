@@ -15,9 +15,9 @@ import {
   FiPlay,
   FiChevronLeft,
   FiSearch,
-  FiInfo,
   FiX,
   FiCode,
+  FiMaximize2,
 } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -27,6 +27,7 @@ import {
   type TheoryChapter,
   type TheoryArticleStub,
   type TheoryArticle,
+  type ArticleImage,
 } from "@/services/theoryService";
 import { PageLoader, ArticleLoader } from "@/components/loading/Spinner";
 
@@ -67,15 +68,29 @@ function CopyButton({ text }: { text: string }) {
 }
 
 // ─── Structured JSON Types ────────────────────────────────────────────────────
+
+/** Old format (sections-based) */
 interface ArticleSection {
   heading: string;
   body?: string;
   code?: string;
   example?: string;
 }
-interface ArticleJson {
+interface LegacyArticleJson {
   introduction?: string;
   sections?: ArticleSection[];
+}
+
+/** New system-design format — one topic per article */
+interface SdTopicJson {
+  name?: string;
+  what_it_is_and_how_it_works?: string;
+  real_world_analogy?: string;
+  placement_in_architecture?: string;
+  tradeoffs?: string;
+  use_cases?: string;
+  alternatives?: string;
+  failure_modes?: string;
 }
 
 // ─── Code Block ───────────────────────────────────────────────────────────────
@@ -115,57 +130,318 @@ function ExampleBlock({ code }: { code: string }) {
   );
 }
 
-// ─── Article Content ──────────────────────────────────────────────────────────
-function ArticleContent({ content }: { content: string }) {
-  let parsed: ArticleJson | null = null;
-  try {
-    parsed = JSON.parse(content) as ArticleJson;
-  } catch {
-    // not JSON
-  }
+// ─── Inline Image (with hover expand + lightbox) ─────────────────────────────
+function InlineImage({ img }: { img: ArticleImage }) {
+  const [open, setOpen] = useState(false);
 
-  if (!parsed) {
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [open]);
+
+  return (
+    <>
+      <div
+        className="relative group my-6 w-full md:w-[70%] lg:w-[60%] mx-auto rounded-xl overflow-hidden border border-[#e2e8f0] dark:border-[#30363d] cursor-pointer"
+        onClick={() => setOpen(true)}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={img.imageUrl}
+          alt={img.caption ?? "Diagram"}
+          className="w-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
+        <button
+          onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+          className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all flex items-center gap-1.5 bg-black/60 hover:bg-black/80 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg backdrop-blur-sm"
+        >
+          <FiMaximize2 size={11} />
+          Full size
+        </button>
+      </div>
+      {img.caption && (
+        <p className="text-center text-[12px] text-[#9ca3af] dark:text-[#6b7280] italic -mt-4 mb-6">
+          {img.caption}
+        </p>
+      )}
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-6"
+          onClick={() => setOpen(false)}
+        >
+          <button
+            onClick={(e) => { e.stopPropagation(); setOpen(false); }}
+            className="absolute top-5 right-5 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all z-10"
+            aria-label="Close"
+          >
+            <FiX size={14} />
+          </button>
+          <div className="max-w-5xl w-full" onClick={(e) => e.stopPropagation()}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.imageUrl}
+              alt={img.caption ?? "Diagram"}
+              className="w-[70%] mx-auto object-contain rounded-xl"
+              loading="lazy"
+            />
+            {img.caption && (
+              <p className="text-center text-[13px] text-white/60 mt-4 italic">
+                {img.caption}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ─── SD Section ───────────────────────────────────────────────────────────────
+/**
+ * Each section has a unique accent color + badge label.
+ * The left border + pill badge make each heading instantly recognisable.
+ */
+type SdSectionVariant =
+  | "analogy"
+  | "architecture"
+  | "tradeoff"
+  | "usecases"
+  | "alternatives"
+  | "failure";
+
+const SD_SECTION_STYLES: Record<
+  SdSectionVariant,
+  { border: string; badge: string; label: string }
+> = {
+  analogy: {
+    border: "border-amber-400 dark:border-amber-500",
+    badge:
+      "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-700/60",
+    label: "Analogy",
+  },
+  architecture: {
+    border: "border-violet-400 dark:border-violet-500",
+    badge:
+      "bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/60",
+    label: "Architecture",
+  },
+  tradeoff: {
+    border: "border-rose-400 dark:border-rose-500",
+    badge:
+      "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-700/60",
+    label: "Tradeoff",
+  },
+  usecases: {
+    border: "border-sky-400 dark:border-sky-500",
+    badge:
+      "bg-sky-50 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/60",
+    label: "Use Cases",
+  },
+  alternatives: {
+    border: "border-teal-400 dark:border-teal-500",
+    badge:
+      "bg-teal-50 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-700/60",
+    label: "Alternatives",
+  },
+  failure: {
+    border: "border-red-500 dark:border-red-600",
+    badge:
+      "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700/60",
+    label: "Failure Modes",
+  },
+};
+
+function SdSection({
+  variant,
+  body,
+}: {
+  variant: SdSectionVariant;
+  body: string;
+}) {
+  const { border, badge, label } = SD_SECTION_STYLES[variant];
+  return (
+    <div className="mb-9">
+      {/* Heading row */}
+      <div className={`flex items-center gap-3 mb-4 pl-4 border-l-[3.5px] ${border}`}>
+        <h2 className="text-[19px] font-bold text-[#111827] dark:text-[#f0f6fc] leading-snug tracking-tight">
+          {label}
+        </h2>
+        <span className={`text-[10.5px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded-md ${badge}`}>
+          {label}
+        </span>
+      </div>
+      {/* Body */}
+      <p
+        className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
+        style={{ wordSpacing: "0.06em" }}
+      >
+        {body}
+      </p>
+    </div>
+  );
+}
+
+// ─── SD Topic Content ─────────────────────────────────────────────────────────
+function SdTopicContent({ topic, images }: { topic: SdTopicJson; images?: ArticleImage[] }) {
+  const introText = topic.what_it_is_and_how_it_works ?? "";
+  const firstDot = introText.search(/[.!?](?:\s|$)/);
+  const callout = firstDot !== -1 ? introText.slice(0, firstDot + 1).trim() : introText;
+  const rest = firstDot !== -1 ? introText.slice(firstDot + 1).trim() : "";
+
+  return (
+    <div>
+      {/* Intro: blue callout + remaining paragraph */}
+      {introText && (
+        <div className="mb-9">
+          {callout && (
+            <div className="border-l-[3px] border-blue-500 dark:border-blue-400 pl-4 mb-5">
+              <p
+                className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
+                style={{ wordSpacing: "0.06em" }}
+              >
+                {callout}
+              </p>
+            </div>
+          )}
+          {rest && (
+            <p
+              className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
+              style={{ wordSpacing: "0.06em" }}
+            >
+              {rest}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Images — after intro, before sections */}
+      {images && images.length > 0 && images.map((img) => (
+        <InlineImage key={img.id} img={img} />
+      ))}
+
+      {topic.real_world_analogy && (
+        <SdSection variant="analogy" body={topic.real_world_analogy} />
+      )}
+      {topic.placement_in_architecture && (
+        <SdSection variant="architecture" body={topic.placement_in_architecture} />
+      )}
+      {topic.tradeoffs && (
+        <SdSection variant="tradeoff" body={topic.tradeoffs} />
+      )}
+      {topic.use_cases && (
+        <SdSection variant="usecases" body={topic.use_cases} />
+      )}
+      {topic.alternatives && (
+        <SdSection variant="alternatives" body={topic.alternatives} />
+      )}
+      {topic.failure_modes && (
+        <SdSection variant="failure" body={topic.failure_modes} />
+      )}
+    </div>
+  );
+}
+
+// ─── Markdown → SD Topic parser ───────────────────────────────────────────────
+const SD_HEADER_MAP: Record<string, keyof SdTopicJson> = {
+  "what it is and how it works": "what_it_is_and_how_it_works",
+  "what it is & how it works": "what_it_is_and_how_it_works",
+  "real world analogy": "real_world_analogy",
+  "real-world analogy": "real_world_analogy",
+  "placement in architecture": "placement_in_architecture",
+  "placement in the architecture": "placement_in_architecture",
+  tradeoffs: "tradeoffs",
+  "trade-offs": "tradeoffs",
+  "trade offs": "tradeoffs",
+  "use cases": "use_cases",
+  "use-cases": "use_cases",
+  alternatives: "alternatives",
+  "failure modes": "failure_modes",
+  "failure-modes": "failure_modes",
+};
+
+function parseSdMarkdown(text: string): SdTopicJson | null {
+  if (!text.includes("###")) return null;
+  const topic: SdTopicJson = {};
+  const blocks = text.split(/^###\s+/m).filter(Boolean);
+  for (const block of blocks) {
+    const newlineIdx = block.indexOf("\n");
+    if (newlineIdx === -1) continue;
+    const rawHeader = block.slice(0, newlineIdx).trim();
+    const body = block.slice(newlineIdx + 1).trim();
+    const key = SD_HEADER_MAP[rawHeader.toLowerCase()];
+    if (key && body) topic[key] = body;
+  }
+  return Object.keys(topic).length > 0 ? topic : null;
+}
+
+// ─── Article Content ──────────────────────────────────────────────────────────
+function ArticleContent({ content, images }: { content: string; images?: ArticleImage[] }) {
+  // 1. SD Markdown (### headers)
+  const sdTopic = parseSdMarkdown(content);
+  if (sdTopic) return <SdTopicContent topic={sdTopic} images={images} />;
+
+  // 2. Legacy JSON
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let parsed: any = null;
+  try { parsed = JSON.parse(content); } catch { /* not JSON */ }
+
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const isSdJson =
+      "what_it_is_and_how_it_works" in parsed ||
+      "placement_in_architecture" in parsed ||
+      "failure_modes" in parsed;
+    if (isSdJson) return <SdTopicContent topic={parsed as SdTopicJson} images={images} />;
+
+    const legacy = parsed as LegacyArticleJson;
     return (
-      <div className="text-sm text-[#4a5568] dark:text-[#a8b2c0] leading-7 whitespace-pre-wrap">
-        {content}
+      <div className="space-y-8">
+        {legacy.introduction && (
+          <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-2xl px-6 py-5">
+            <p className="text-[13.5px] text-[#1a202c] dark:text-[#c8d3e0] leading-[1.85] font-medium">
+              {legacy.introduction}
+            </p>
+          </div>
+        )}
+        {legacy.sections?.map((section, idx) => (
+          <section key={idx} className="space-y-3">
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="w-1 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
+              <h2 className="text-base font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
+                {section.heading}
+              </h2>
+            </div>
+            {section.body && (
+              <p className="text-[13.5px] text-[#374151] dark:text-[#c9d1d9] leading-[1.85] pl-3.5">
+                {section.body}
+              </p>
+            )}
+            {section.code && (
+              <div className="pl-3.5">
+                <CodeBlock code={section.code} />
+              </div>
+            )}
+            {section.example && (
+              <div className="pl-3.5">
+                <ExampleBlock code={section.example} />
+              </div>
+            )}
+          </section>
+        ))}
       </div>
     );
   }
 
+  // 3. Plain text fallback
   return (
-    <div className="space-y-8">
-      {parsed.introduction && (
-        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-2xl px-6 py-5">
-          <p className="text-sm text-[#2d1f4a] dark:text-[#c8b8e8] leading-7 font-medium">
-            {parsed.introduction}
-          </p>
-        </div>
-      )}
-      {parsed.sections?.map((section, idx) => (
-        <section key={idx} className="space-y-3">
-          <div className="flex items-center gap-2.5 mb-3">
-            <span className="w-1 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
-            <h2 className="text-base font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
-              {section.heading}
-            </h2>
-          </div>
-          {section.body && (
-            <p className="text-sm text-[#4a5568] dark:text-[#a8b2c0] leading-7 pl-3.5">
-              {section.body}
-            </p>
-          )}
-          {section.code && (
-            <div className="pl-3.5">
-              <CodeBlock code={section.code} />
-            </div>
-          )}
-          {section.example && (
-            <div className="pl-3.5">
-              <ExampleBlock code={section.example} />
-            </div>
-          )}
-        </section>
-      ))}
+    <div className="text-[16px] text-[#374151] dark:text-[#c9d1d9] leading-[1.95] whitespace-pre-wrap">
+      {content}
     </div>
   );
 }
@@ -196,46 +472,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-// ─── Chapter Cards Grid with Pagination ──────────────────────────────────────
-const accentColors = [
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-  {
-    bg: "bg-emerald-100 dark:bg-emerald-900/30",
-    text: "text-emerald-600 dark:text-emerald-400",
-    border: "border-emerald-200 dark:border-emerald-800/50",
-    hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500",
-  },
-];
-
+// ─── Chapter Card ─────────────────────────────────────────────────────────────
 function ChapterCard({
   chapter,
   globalIdx,
@@ -247,35 +484,28 @@ function ChapterCard({
   searchQuery: string;
   onArticleClick: (article: TheoryArticleStub) => void;
 }) {
-  const accent = accentColors[globalIdx % accentColors.length];
   const chapterTotalTime = chapter.articles.reduce(
     (a, art) => a + art.readTimeMinutes,
     0
   );
-
   const displayArticles = searchQuery.trim()
     ? chapter.articles.filter((a) =>
         a.title.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : chapter.articles.slice(0, 3);
-
   const hiddenCount =
     !searchQuery.trim() && chapter.articles.length > 3
       ? chapter.articles.length - 3
       : 0;
 
   return (
-    <div
-      className={`group bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] ${accent.hoverBorder} p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
-    >
+    <div className="group bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] hover:border-emerald-500 dark:hover:border-emerald-500 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
       {/* Card header */}
       <div className="flex items-start justify-between mb-5">
-        <div className={`p-3.5 ${accent.bg} rounded-2xl ${accent.text}`}>
+        <div className="p-3.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600 dark:text-emerald-400">
           <FiLayers size={20} />
         </div>
-        <span
-          className={`text-[10px] font-bold ${accent.text} ${accent.bg} px-3 py-1 rounded-lg border ${accent.border}`}
-        >
+        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
           Chapter {globalIdx + 1}
         </span>
       </div>
@@ -340,6 +570,7 @@ function ChapterCard({
   );
 }
 
+// ─── Chapters Grid ────────────────────────────────────────────────────────────
 function ChaptersGrid({
   chapters,
   currentPage,
@@ -479,7 +710,7 @@ function ChaptersGrid({
             })}
           </div>
 
-          {/* Pagination — only shown when NOT searching */}
+          {/* Pagination */}
           {!isSearching && totalPages > 1 && (
             <>
               <div className="flex items-center justify-center gap-2 mt-6">
@@ -491,7 +722,6 @@ function ChaptersGrid({
                   <FiChevronLeft size={14} />
                   Previous
                 </button>
-
                 <div className="flex items-center gap-1.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map(
                     (page) => (
@@ -509,7 +739,6 @@ function ChaptersGrid({
                     )
                   )}
                 </div>
-
                 <button
                   onClick={() => onPageChange(safePage + 1)}
                   disabled={safePage === totalPages}
@@ -519,7 +748,6 @@ function ChaptersGrid({
                   <FiChevronRight size={14} />
                 </button>
               </div>
-
               <p className="text-center text-[11px] text-[#a0aec0] dark:text-[#64748b] font-medium mt-3">
                 Page {safePage} of {totalPages} · Showing chapters{" "}
                 {startIdx + 1}–
@@ -548,10 +776,7 @@ function ArticlePanel({
   allChapters: TheoryChapter[];
   onArticleClick: (article: TheoryArticleStub) => void;
 }) {
-  if (isLoading) {
-    return <ArticleLoader />;
-  }
-
+  if (isLoading) return <ArticleLoader />;
   if (!article) return null;
 
   const allArticles: { stub: TheoryArticleStub; chapterName: string }[] = [];
@@ -609,8 +834,8 @@ function ArticlePanel({
       </div>
 
       {/* Article body */}
-      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm px-8 py-8 mb-6">
-        <ArticleContent content={article.content} />
+      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm px-7 py-8 mb-6">
+        <ArticleContent content={article.content} images={article.images ?? []} />
       </div>
 
       {/* Prev / Next */}
@@ -673,10 +898,7 @@ export default function SystemDesignPage() {
   const [isArticleLoading, setArticleLoading] = useState(false);
   const [articleError, setArticleError] = useState<string | null>(null);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Search — input (immediate) vs query (debounced, written to URL)
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -692,7 +914,7 @@ export default function SystemDesignPage() {
     setSearchQuery(q);
   }, []);
 
-  // Debounced search — update query & URL after DEBOUNCE_MS idle time
+  // Debounced search
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearchInput(value);
@@ -726,6 +948,7 @@ export default function SystemDesignPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, pathname]);
 
+  // Cleanup debounce on unmount
   useEffect(
     () => () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -743,12 +966,10 @@ export default function SystemDesignPage() {
       try {
         setChaptersLoading(true);
         setChaptersError(null);
-        // "system design" matches via LIKE LOWER('%system design%') in the backend
         const result = await fetchChaptersBySubjectName("system design");
         setChapters(result.chapters);
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : "Failed to load chapters";
+        const msg = err instanceof Error ? err.message : "Failed to load chapters";
         setChaptersError(msg);
       } finally {
         setChaptersLoading(false);
@@ -786,8 +1007,7 @@ export default function SystemDesignPage() {
         articleCacheRef.current.set(article.id, data);
         setActiveArticle(data);
       } catch (err: unknown) {
-        const msg =
-          err instanceof Error ? err.message : "Failed to load article";
+        const msg = err instanceof Error ? err.message : "Failed to load article";
         setArticleError(msg);
       } finally {
         setArticleLoading(false);
@@ -805,7 +1025,6 @@ export default function SystemDesignPage() {
 
   const totalArticles = chapters.reduce((acc, c) => acc + c.articles.length, 0);
 
-  // ── Loading ──
   if (isChaptersLoading) {
     return (
       <div className="min-h-[calc(100vh-56px)] bg-[#f4fcf7] dark:bg-[#0d1117]">
@@ -814,15 +1033,11 @@ export default function SystemDesignPage() {
     );
   }
 
-  // ── Error ──
   if (chaptersError) {
     return (
       <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#f4fcf7] dark:bg-[#0d1117]">
         <div className="max-w-md text-center bg-white dark:bg-[#161b22] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm">
-          <FiAlertCircle
-            size={36}
-            className="text-rose-500 dark:text-rose-400 mx-auto mb-4"
-          />
+          <FiAlertCircle size={36} className="text-rose-500 dark:text-rose-400 mx-auto mb-4" />
           <h2 className="font-bold text-xl text-[#1a202c] dark:text-[#f0f6fc] mb-2">
             Could not load data
           </h2>
@@ -840,7 +1055,6 @@ export default function SystemDesignPage() {
     );
   }
 
-  // ── Main Render ──
   return (
     <div className="min-h-[calc(100vh-56px)] bg-[#f4fcf7] dark:bg-[#0d1117] text-[#2d3748] dark:text-[#e2e8f0] font-sans transition-colors duration-300">
       {/* Sticky top bar */}
