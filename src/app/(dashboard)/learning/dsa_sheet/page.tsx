@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useEffect, useRef, useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   fetchTopics,
   fetchPatterns,
@@ -29,7 +28,7 @@ import {
 } from "react-icons/fi";
 import { HiOfficeBuilding } from "react-icons/hi";
 import DSASidebar from "@/components/layout/Sidebar";
-import Spinner from "@/components/loading/Spinner";
+import { DSALoader, DSAFullLoader } from "@/components/loading/Spinner";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -52,86 +51,95 @@ type ExpandSection = "notes" | "companies" | "topic";
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const DSASheet: React.FC = () => {
-  const authContext = useContext(AuthContext);
-  const userData = authContext?.user;
-  const isAuthLoading = authContext?.isLoading ?? true;
-
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [view, setView] = useState<"dashboard" | "pattern">("dashboard");
   const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string | number>>(new Set());
+
+  // ── Solved problems — hydrate from localStorage instantly for zero-delay display ──
   const [solvedProblems, setSolvedProblems] = useState<Set<string | number>>(() => {
-    // Restore from localStorage for instant display before API loads
     try {
       const raw = localStorage.getItem("dsa_solved_problems");
-      if (raw) {
-        const arr = JSON.parse(raw) as (string | number)[];
-        return new Set(arr);
-      }
+      if (raw) return new Set(JSON.parse(raw) as (string | number)[]);
     } catch { }
     return new Set<string | number>();
   });
+
   const [progressSummary, setProgressSummary] = useState<ProgressSummary | null>(null);
   const [dsaTopics, setDsaTopics] = useState<KnowledgeTopic[]>([]);
   const [patternsCache, setPatternsCache] = useState<Map<string | number, KnowledgePattern[]>>(new Map());
   const [problemsCache, setProblemsCache] = useState<Map<string | number, KnowledgeProblem[]>>(new Map());
   const [activePatternId, setActivePatternId] = useState<string | number | null>(null);
   const [loadingPatternIds, setLoadingPatternIds] = useState<Set<string | number>>(new Set());
+
+  // ── Single loading flag: true until BOTH topics and progress have resolved ──
   const [isDataLoading, setIsDataLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // ── Single-flight ref: prevents React 18 Strict Mode double-invocation ──────
   const hasFetchedRef = useRef(false);
 
+  // ── Background pattern prefetch — fires after topics arrive ─────────────────
+  const prefetchAllPatterns = (topics: KnowledgeTopic[]) => {
+    topics.forEach(async (topic) => {
+      try {
+        const patterns = await fetchPatterns(topic.id);
+        setPatternsCache((prev) => {
+          if (prev.has(topic.id)) return prev;
+          return new Map(prev).set(topic.id, patterns);
+        });
+      } catch { }
+    });
+  };
+
   useEffect(() => {
-    if (isAuthLoading) return;
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
-    const controller = new AbortController();
+    // ── Fire topics and progress IN PARALLEL immediately on mount — no auth gate ──
+    // Cookies are in the browser; api.ts interceptor handles 401→refresh.
+    // Both run concurrently; the page spinner drops only after both resolve.
+    let topicsDone = false;
+    let progressDone = false;
 
-    const load = async () => {
-      try {
-        setIsDataLoading(true);
-        setFetchError(null);
-
-        if (userData) {
-          const [topics, progressResult] = await Promise.all([
-            fetchTopics(),
-            fetchProgressSummary(),
-          ]);
-          setDsaTopics(topics);
-          setProgressSummary(progressResult.summary);
-          setSolvedProblems(progressResult.solvedSet);
-          try {
-            localStorage.setItem(
-              "dsa_solved_problems",
-              JSON.stringify(Array.from(progressResult.solvedSet))
-            );
-          } catch { }
-        } else {
-          const topics = await fetchTopics();
-          setDsaTopics(topics);
-        }
-      } catch (err: any) {
-        if (err?.name === "AbortError") return;
-        console.error("Failed to load DSA data:", err);
-        setFetchError(
-          err?.message || "Failed to load topics. Please check if the server is running."
-        );
-      } finally {
-        setIsDataLoading(false);
-      }
+    const checkDone = () => {
+      if (topicsDone && progressDone) setIsDataLoading(false);
     };
 
-    load();
+    fetchTopics()
+      .then((topics) => {
+        setDsaTopics(topics);
+        topicsDone = true;
+        checkDone();
+        // Background pattern prefetch — patterns are cached before user clicks
+        prefetchAllPatterns(topics);
+      })
+      .catch((err) => {
+        console.error("Failed to load topics:", err);
+        setFetchError(err?.message || "Failed to load topics. Please check if the server is running.");
+        topicsDone = true;
+        checkDone();
+      });
 
-    return () => {
-      controller.abort();
-    };
-  }, [isAuthLoading, userData]);
+    fetchProgressSummary()
+      .then((result) => {
+        setProgressSummary(result.summary);
+        setSolvedProblems(result.solvedSet);
+        try {
+          localStorage.setItem("dsa_solved_problems", JSON.stringify(Array.from(result.solvedSet)));
+        } catch { }
+        progressDone = true;
+        checkDone();
+      })
+      .catch((err) => {
+        console.error("Failed to load progress:", err);
+        progressDone = true;
+        checkDone();
+      });
 
-  // ── Toggle problem solved status ──────────────────────────────────────────
+  }, []);
+
+  // ── Toggle problem solved status (optimistic UI) ──────────────────────────
   const updateSolvedProblems = async (problemId: string | number) => {
     const prev = new Set(solvedProblems);
     const next = new Set(solvedProblems);
@@ -209,44 +217,13 @@ const DSASheet: React.FC = () => {
     return null;
   }, [activePatternId, patternsCache]);
 
-  const getTopicStats = (topic: KnowledgeTopic) => {
-    const total = Number(topic.problem_count);
-    const patterns = patternsCache.get(topic.id);
-    if (!patterns) return { total, solved: 0, percent: 0 };
-
-    const solved = patterns.reduce((acc, p) => {
-      const problems = problemsCache.get(p.id) ?? [];
-      return acc + problems.filter((prob) => solvedProblems.has(prob.id)).length;
-    }, 0);
-
-    return {
-      total,
-      solved,
-      percent: total === 0 ? 0 : Math.round((solved / total) * 100),
-    };
-  };
-
   const totalProblemsCount = useMemo(
     () => dsaTopics.reduce((acc, t) => acc + Number(t.problem_count), 0),
     [dsaTopics]
   );
 
-  // ── Loading state ─────────────────────────────────────────────────────────
-  if (isDataLoading) {
-    return (
-      <div className="flex flex-col h-[calc(100vh-56px)] items-center justify-center gap-4 bg-[#e8f5ee] dark:bg-[#0d1117]">
-        <Spinner />
-        <div className="text-center">
-          <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-            Loading DSA Sheet
-          </h3>
-          <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-            Fetching problems, progress and statistics...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // ── Full-page skeleton while initial data loads ──
+  if (isDataLoading) return <DSAFullLoader />;
 
   // ── Error state ───────────────────────────────────────────────────────────
   if (fetchError) {
@@ -267,7 +244,7 @@ const DSASheet: React.FC = () => {
     );
   }
 
-  // ── Main render ───────────────────────────────────────────────────────────
+  // ── Main render — layout is shown immediately ──────────────────────────────
   return (
     <div className="flex h-[calc(100vh-56px)] bg-[#e8f5ee] dark:bg-[#0d1117] text-[#2d3748] dark:text-[#e2e8f0] overflow-hidden font-sans transition-colors duration-300">
 
@@ -775,23 +752,7 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
 
   if (!activePattern) return null;
 
-  if (isLoading)
-    return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center">
-        <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
-          <Spinner aria-label="Loading content" />
-
-          <div className="text-center">
-            <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-              Loading Git Content
-            </h3>
-            <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-              Fetching chapters and articles...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+  if (isLoading) return <DSALoader />;
 
   const solvedCount = problems.filter((p) => solvedProblems.has(p.id)).length;
 

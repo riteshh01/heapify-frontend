@@ -21,7 +21,7 @@ export { FormField, FormError } from "./forms/FormField";
 
 // Loading
 export { Skeleton } from "./loading/Skeleton";
-export { Spinner } from "./loading/Spinner";
+export { default as Spinner, PageLoader, ArticleLoader, DSALoader, DSAFullLoader } from "./loading/Spinner";
 
 // Common
 export { ErrorBoundary } from "./common/ErrorBoundary";

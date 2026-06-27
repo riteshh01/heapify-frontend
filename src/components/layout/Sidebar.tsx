@@ -93,49 +93,49 @@ const DSASidebar: React.FC<SidebarProps> = ({
           {/* Topics */}
           <div className="space-y-1 px-4">
             {dsaTopics.map((topic) => (
-              <div key={topic.id}>
-                <button
-                  onClick={() => handleTopicClick(topic.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${activeTopicId === topic.id
-                    ? "bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                    : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <FiLayers
-                      size={14}
-                      className={
-                        activeTopicId === topic.id
-                          ? "text-emerald-600 dark:text-emerald-400"
-                          : "text-[#a0aec0] dark:text-[#64748b]"
-                      }
-                    />
-                    <span>{topic.name}</span>
-                  </div>
-                  {expandedTopics.has(topic.id) ? (
-                    <FiChevronDown size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
-                  ) : (
-                    <FiChevronRight size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
-                  )}
-                </button>
+                <div key={topic.id}>
+                  <button
+                    onClick={() => handleTopicClick(topic.id)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-bold transition-all ${activeTopicId === topic.id
+                      ? "bg-emerald-100/60 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                      : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+                      }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <FiLayers
+                        size={14}
+                        className={
+                          activeTopicId === topic.id
+                            ? "text-emerald-600 dark:text-emerald-400"
+                            : "text-[#a0aec0] dark:text-[#64748b]"
+                        }
+                      />
+                      <span>{topic.name}</span>
+                    </div>
+                    {expandedTopics.has(topic.id) ? (
+                      <FiChevronDown size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
+                    ) : (
+                      <FiChevronRight size={12} className="text-[#a0aec0] dark:text-[#64748b]" />
+                    )}
+                  </button>
 
-                {expandedTopics.has(topic.id) && (
-                  <div className="ml-5 mt-1 mb-2 space-y-1 border-l-2 border-[#e8f5ee] dark:border-[#30363d] pl-2.5">
-                    {(patternsCache.get(topic.id) ?? []).map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => handlePatternClick(p.id)}
-                        className={`block w-full text-left px-3 py-2 text-[12px] rounded-lg transition-all ${activePatternId === p.id
-                          ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 font-bold"
-                          : "text-[#4a5568] dark:text-[#8b949e] font-semibold hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
-                          }`}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+                  {expandedTopics.has(topic.id) && (
+                    <div className="ml-5 mt-1 mb-2 space-y-1 border-l-2 border-[#e8f5ee] dark:border-[#30363d] pl-2.5">
+                      {(patternsCache.get(topic.id) ?? []).map((p) => (
+                        <button
+                          key={p.id}
+                          onClick={() => handlePatternClick(p.id)}
+                          className={`block w-full text-left px-3 py-2 text-[12px] rounded-lg transition-all ${activePatternId === p.id
+                            ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 font-bold"
+                            : "text-[#4a5568] dark:text-[#8b949e] font-semibold hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+                            }`}
+                        >
+                          {p.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
             ))}
           </div>
         </nav>

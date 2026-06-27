@@ -28,7 +28,7 @@ import {
   type TheoryArticleStub,
   type TheoryArticle,
 } from "@/services/theoryService";
-import Spinner from "@/components/loading/Spinner";
+import { PageLoader, ArticleLoader } from "@/components/loading/Spinner";
 
 const CHAPTERS_PER_PAGE = 4;
 const DEBOUNCE_MS = 350;
@@ -217,11 +217,11 @@ function Highlight({ text, query }: { text: string; query: string }) {
 // ─── Chapter Cards Grid with Pagination ──────────────────────────────────────
 const accentColors = [
   { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
-  { bg: "bg-sky-100 dark:bg-sky-900/30", text: "text-sky-600 dark:text-sky-400", border: "border-sky-200 dark:border-sky-800/50", hoverBorder: "hover:border-sky-500 dark:hover:border-sky-500" },
-  { bg: "bg-violet-100 dark:bg-violet-900/30", text: "text-violet-600 dark:text-violet-400", border: "border-violet-200 dark:border-violet-800/50", hoverBorder: "hover:border-violet-500 dark:hover:border-violet-500" },
-  { bg: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-800/50", hoverBorder: "hover:border-amber-500 dark:hover:border-amber-500" },
-  { bg: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-800/50", hoverBorder: "hover:border-rose-500 dark:hover:border-rose-500" },
-  { bg: "bg-teal-100 dark:bg-teal-900/30", text: "text-teal-600 dark:text-teal-400", border: "border-teal-200 dark:border-teal-800/50", hoverBorder: "hover:border-teal-500 dark:hover:border-teal-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
+  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
 ];
 
 function ChapterCard({
@@ -382,7 +382,7 @@ function ChaptersGrid({
               <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 rounded-lg">
                 {chapters.length} Chapters
               </span>
-              <span className="text-[11px] font-bold text-sky-700 dark:text-sky-300 bg-sky-100/80 dark:bg-sky-900/40 border border-sky-200 dark:border-sky-800/50 px-3 py-1 rounded-lg">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 rounded-lg">
                 {totalArticles} Articles
               </span>
             </div>
@@ -501,16 +501,7 @@ function ArticlePanel({
   onArticleClick: (article: TheoryArticleStub) => void;
 }) {
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <div className="flex flex-col items-center gap-4">
-          <Spinner />
-          <p className="text-sm font-semibold text-[#4a5568] dark:text-[#8b949e]">
-            Loading article...
-          </p>
-        </div>
-      </div>
-    );
+    return <ArticleLoader />;
   }
 
   if (!article) return null;
@@ -754,19 +745,8 @@ export default function GitPage() {
   // ── Loading ──
   if (isChaptersLoading) {
     return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center">
-        <div className="flex flex-col items-center gap-4 rounded-3xl px-10 py-8 shadow-sm">
-          <Spinner aria-label="Loading content" />
-
-          <div className="text-center">
-            <h3 className="text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] animate-pulse">
-              Loading Git Content
-            </h3>
-            <p className="mt-1 text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-              Fetching chapters and articles...
-            </p>
-          </div>
-        </div>
+      <div className="min-h-[calc(100vh-56px)] bg-[#f4fcf7] dark:bg-[#0d1117]">
+        <PageLoader />
       </div>
     );
   }
