@@ -258,6 +258,251 @@ const SD_SECTION_STYLES: Record<
   },
 };
 
+// ─── Inline Markdown renderer ────────────────────────────────────────────────
+/**
+ * Renders inline markdown: **bold**, *italic*, `code`, and plain text.
+ * Returns an array of React nodes so it can be embedded in any block element.
+ */
+function renderInline(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
+  // Pattern: **bold** | *italic* | `code`
+  const pattern = /(\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)/g;
+  let last = 0;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > last) {
+      nodes.push(text.slice(last, match.index));
+    }
+    if (match[2] !== undefined) {
+      // **bold**
+      nodes.push(
+        <strong key={match.index} className="font-bold text-[#111827] dark:text-[#f0f6fc]">
+          {match[2]}
+        </strong>
+      );
+    } else if (match[3] !== undefined) {
+      // *italic*
+      nodes.push(
+        <em key={match.index} className="italic text-[#374151] dark:text-[#c9d1d9]">
+          {match[3]}
+        </em>
+      );
+    } else if (match[4] !== undefined) {
+      // `inline code`
+      nodes.push(
+        <code
+          key={match.index}
+          className="bg-[#f3f4f6] dark:bg-[#161b22] text-[#0f766e] dark:text-[#34d399] text-[0.875em] font-mono px-[0.45em] py-[0.15em] rounded-md border border-[#e5e7eb] dark:border-[#30363d]"
+        >
+          {match[4]}
+        </code>
+      );
+    }
+    last = match.index + match[0].length;
+  }
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes.length > 0 ? nodes : [text];
+}
+
+// ─── Block Markdown renderer ──────────────────────────────────────────────────
+/**
+ * Full markdown-to-JSX renderer.
+ * Supports:
+ *  - Fenced code blocks (``` ... ```)
+ *  - ATX headings  # ## ### ####
+ *  - Blockquotes   > …
+ *  - Unordered lists  - / * / •
+ *  - Ordered lists    1. 2. …
+ *  - Horizontal rules ---
+ *  - Paragraph groups (blank-line separated)
+ *  - Inline markdown within all block types
+ */
+function MarkdownBody({ text, className }: { text: string; className?: string }) {
+  const lines = text.split("\n");
+  const blocks: React.ReactNode[] = [];
+  let i = 0;
+  let keyCounter = 0;
+  const nextKey = () => `md-${keyCounter++}`;
+
+  while (i < lines.length) {
+    const raw = lines[i];
+
+    // ── Fenced code block ─────────────────────────────────────────────────────
+    if (/^```/.test(raw)) {
+      const lang = raw.slice(3).trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing ```
+      const codeStr = codeLines.join("\n");
+      blocks.push(
+        <div key={nextKey()} className="rounded-xl overflow-hidden border border-[#30363d] shadow-sm my-5">
+          <div className="flex items-center justify-between bg-[#161b22] border-b border-[#30363d] px-4 py-2.5">
+            <span className="text-[10px] font-bold text-[#7d8590] uppercase tracking-widest">
+              {lang || "code"}
+            </span>
+            <CopyButton text={codeStr} />
+          </div>
+          <pre className="bg-[#0d1117] px-5 py-4 overflow-x-auto text-[12.5px] font-mono text-[#e6edf3] leading-relaxed whitespace-pre [scrollbar-width:thin] [scrollbar-color:#21262d_transparent]">
+            <code>{codeStr}</code>
+          </pre>
+        </div>
+      );
+      continue;
+    }
+
+    // ── ATX Headings ──────────────────────────────────────────────────────────
+    const h4 = raw.match(/^####\s+(.+)/);
+    if (h4) {
+      blocks.push(
+        <h4 key={nextKey()} className="text-[14px] font-bold text-[#1a202c] dark:text-[#e2e8f0] mt-6 mb-2 tracking-tight">
+          {renderInline(h4[1])}
+        </h4>
+      );
+      i++; continue;
+    }
+    const h3 = raw.match(/^###\s+(.+)/);
+    if (h3) {
+      blocks.push(
+        <h3 key={nextKey()} className="text-[16px] font-bold text-[#111827] dark:text-[#f0f6fc] mt-7 mb-2.5 tracking-tight border-b border-[#e5e7eb] dark:border-[#30363d] pb-1.5">
+          {renderInline(h3[1])}
+        </h3>
+      );
+      i++; continue;
+    }
+    const h2 = raw.match(/^##\s+(.+)/);
+    if (h2) {
+      blocks.push(
+        <h2 key={nextKey()} className="text-[18px] font-extrabold text-[#111827] dark:text-[#f0f6fc] mt-8 mb-3 tracking-tight">
+          {renderInline(h2[1])}
+        </h2>
+      );
+      i++; continue;
+    }
+    const h1 = raw.match(/^#\s+(.+)/);
+    if (h1) {
+      blocks.push(
+        <h1 key={nextKey()} className="text-[22px] font-extrabold text-[#111827] dark:text-[#f0f6fc] mt-8 mb-4 tracking-tight">
+          {renderInline(h1[1])}
+        </h1>
+      );
+      i++; continue;
+    }
+
+    // ── Horizontal rule ───────────────────────────────────────────────────────
+    if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(raw)) {
+      blocks.push(<hr key={nextKey()} className="border-0 border-t border-[#e5e7eb] dark:border-[#30363d] my-6" />);
+      i++; continue;
+    }
+
+    // ── Blockquote ────────────────────────────────────────────────────────────
+    if (/^>\s/.test(raw)) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        quoteLines.push(lines[i].replace(/^>\s?/, ""));
+        i++;
+      }
+      blocks.push(
+        <blockquote
+          key={nextKey()}
+          className="border-l-4 border-emerald-500 dark:border-emerald-400 pl-5 pr-3 py-3 my-5 bg-emerald-50/60 dark:bg-emerald-900/10 rounded-r-xl"
+        >
+          {quoteLines.map((ql, qi) => (
+            <p key={qi} className="text-[15px] text-[#374151] dark:text-[#b0bec5] leading-[1.9] italic tracking-[0.013em]" style={{ wordSpacing: "0.05em" }}>
+              {renderInline(ql)}
+            </p>
+          ))}
+        </blockquote>
+      );
+      continue;
+    }
+
+    // ── Unordered list ────────────────────────────────────────────────────────
+    if (/^[-*•]\s+/.test(raw)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*•]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*•]\s+/, ""));
+        i++;
+      }
+      blocks.push(
+        <ul key={nextKey()} className="my-4 space-y-2 pl-1">
+          {items.map((item, ii) => (
+            <li key={ii} className="flex items-start gap-3">
+              <span className="mt-[7px] shrink-0 w-[6px] h-[6px] rounded-full bg-emerald-500 dark:bg-emerald-400" />
+              <span className="text-[15.5px] text-[#374151] dark:text-[#b0bec5] leading-[1.9] tracking-[0.013em]" style={{ wordSpacing: "0.05em" }}>
+                {renderInline(item)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      );
+      continue;
+    }
+
+    // ── Ordered list ──────────────────────────────────────────────────────────
+    if (/^\d+\.\s+/.test(raw)) {
+      const items: string[] = [];
+      let num = 1;
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ""));
+        i++;
+        num++;
+      }
+      blocks.push(
+        <ol key={nextKey()} className="my-4 space-y-2 pl-1">
+          {items.map((item, ii) => (
+            <li key={ii} className="flex items-start gap-3">
+              <span className="mt-0.5 shrink-0 min-w-[22px] h-[22px] rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold flex items-center justify-center border border-emerald-200 dark:border-emerald-800/50">
+                {ii + 1}
+              </span>
+              <span className="text-[15.5px] text-[#374151] dark:text-[#b0bec5] leading-[1.9] tracking-[0.013em]" style={{ wordSpacing: "0.05em" }}>
+                {renderInline(item)}
+              </span>
+            </li>
+          ))}
+        </ol>
+      );
+      continue;
+    }
+
+    // ── Blank line — skip ────────────────────────────────────────────────────
+    if (raw.trim() === "") { i++; continue; }
+
+    // ── Paragraph group ──────────────────────────────────────────────────────
+    const paraLines: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^(#{1,4}\s|```|>\s|[-*•]\s|\d+\.\s|-{3,}|\*{3,}|_{3,})/.test(lines[i])
+    ) {
+      paraLines.push(lines[i]);
+      i++;
+    }
+    if (paraLines.length > 0) {
+      blocks.push(
+        <p
+          key={nextKey()}
+          className="text-[15.5px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.013em] mb-1"
+          style={{ wordSpacing: "0.06em" }}
+        >
+          {paraLines.map((pl, pi) => (
+            <React.Fragment key={pi}>
+              {pi > 0 && " "}
+              {renderInline(pl)}
+            </React.Fragment>
+          ))}
+        </p>
+      );
+    }
+  }
+
+  return <div className={className}>{blocks}</div>;
+}
+
+// ─── SD Section ───────────────────────────────────────────────────────────────
 function SdSection({
   variant,
   body,
@@ -277,13 +522,8 @@ function SdSection({
           {label}
         </span>
       </div>
-      {/* Body */}
-      <p
-        className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
-        style={{ wordSpacing: "0.06em" }}
-      >
-        {body}
-      </p>
+      {/* Body — use full markdown renderer so bullets/lists inside sections work */}
+      <MarkdownBody text={body} />
     </div>
   );
 }
@@ -291,33 +531,28 @@ function SdSection({
 // ─── SD Topic Content ─────────────────────────────────────────────────────────
 function SdTopicContent({ topic, images }: { topic: SdTopicJson; images?: ArticleImage[] }) {
   const introText = topic.what_it_is_and_how_it_works ?? "";
+
+  // Split intro at the first sentence to make a blue callout
   const firstDot = introText.search(/[.!?](?:\s|$)/);
-  const callout = firstDot !== -1 ? introText.slice(0, firstDot + 1).trim() : introText;
-  const rest = firstDot !== -1 ? introText.slice(firstDot + 1).trim() : "";
+  const callout  = firstDot !== -1 ? introText.slice(0, firstDot + 1).trim() : introText;
+  const rest     = firstDot !== -1 ? introText.slice(firstDot + 1).trim()    : "";
 
   return (
     <div>
-      {/* Intro: blue callout + remaining paragraph */}
+      {/* Intro: blue callout + full markdown body for the rest */}
       {introText && (
         <div className="mb-9">
           {callout && (
             <div className="border-l-[3px] border-blue-500 dark:border-blue-400 pl-4 mb-5">
               <p
-                className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
+                className="text-[15.5px] font-medium text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.013em]"
                 style={{ wordSpacing: "0.06em" }}
               >
-                {callout}
+                {renderInline(callout)}
               </p>
             </div>
           )}
-          {rest && (
-            <p
-              className="text-[16px] text-[#374151] dark:text-[#b0bec5] leading-[1.95] tracking-[0.012em]"
-              style={{ wordSpacing: "0.06em" }}
-            >
-              {rest}
-            </p>
-          )}
+          {rest && <MarkdownBody text={rest} />}
         </div>
       )}
 
@@ -438,12 +673,8 @@ function ArticleContent({ content, images }: { content: string; images?: Article
     );
   }
 
-  // 3. Plain text fallback
-  return (
-    <div className="text-[16px] text-[#374151] dark:text-[#c9d1d9] leading-[1.95] whitespace-pre-wrap">
-      {content}
-    </div>
-  );
+  // 3. Rich markdown fallback — handles auth articles with bullets, headers, etc.
+  return <MarkdownBody text={content} />;
 }
 
 // ─── Highlight matching text ──────────────────────────────────────────────────
