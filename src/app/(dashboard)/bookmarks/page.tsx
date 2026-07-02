@@ -1,6 +1,7 @@
 /**
  * Bookmarks Page — 2010s design system
  */
+"use client";
 
 import { EmptyState } from "@/components/common/EmptyState";
 
