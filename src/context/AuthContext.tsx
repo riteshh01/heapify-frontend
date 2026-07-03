@@ -53,9 +53,9 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const AUTH_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
+// NOTE: Do NOT build full URLs here and pass them to apiCall().
+// apiCall() already prepends NEXT_PUBLIC_API_BASE_URL (/api) internally.
+// Just pass the path after /api, e.g. "/auth/me" → becomes "/api/auth/me".
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const validateSession = async () => {
       try {
         const data = await apiCall<{ success: boolean; data?: { user: User } }>(
-          `${AUTH_BASE_URL}/me`
+          "/auth/me"
         );
 
         if (data.success && data.data?.user) {
@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Logout — clears both httpOnly cookies server-side ────────────────────
   const logout = useCallback(async () => {
     try {
-      await fetch(`${AUTH_BASE_URL}/logout`, {
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
@@ -141,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getUserData = useCallback(async () => {
     try {
       const data = await apiCall<{ success: boolean; data?: { user: User } }>(
-        `${AUTH_BASE_URL}/me`
+        "/auth/me"
       );
 
       if (data.success && data.data?.user) {

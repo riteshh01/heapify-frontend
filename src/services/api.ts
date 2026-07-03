@@ -11,13 +11,11 @@
  *   can clear state and redirect the user to /login.
  */
 
-const AUTH_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
-
+// API_BASE_URL: prepended by apiCall() for relative endpoint paths like "/auth/me"
+// In production:  NEXT_PUBLIC_API_BASE_URL = "/api"  → all calls go through Next.js proxy
+// In development: NEXT_PUBLIC_API_BASE_URL = "/api"  → proxy rewrites to localhost:4000
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  "http://localhost:5000/api";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
 
 // ─── Refresh-race guard ───────────────────────────────────────────────────────
 // If multiple concurrent requests all 401 at the same time we only want ONE
@@ -48,7 +46,9 @@ function getCsrfToken(): string {
 async function attemptRefresh(): Promise<boolean> {
   if (refreshPromise) return refreshPromise;
 
-  refreshPromise = fetch(`${AUTH_BASE_URL}/refresh`, {
+  // Use absolute path /api/auth/refresh — goes through Next.js proxy directly,
+  // no double-prefix risk since this is a raw fetch (not through apiCall).
+  refreshPromise = fetch(`${API_BASE_URL}/auth/refresh`, {
     method: "POST",
     credentials: "include",
   })
