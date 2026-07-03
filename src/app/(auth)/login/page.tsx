@@ -12,7 +12,12 @@ interface AuthResponse {
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
-const GOOGLE_OAUTH_URL = `${API_BASE_URL}/google`;
+
+// OAuth: use relative path so the request goes through the Next.js proxy.
+// This ensures cookies set during the OAuth callback are first-party on the
+// frontend domain rather than third-party on the backend domain.
+const GOOGLE_OAUTH_URL = "/api/auth/google";
+
 
 export default function LoginPage() {
   const router = useRouter();
