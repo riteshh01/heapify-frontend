@@ -7,6 +7,8 @@ import {
   fetchProblems,
   fetchProgressSummary,
   fetchProblemTags,
+  fetchUserNote,
+  saveUserNote,
   toggleProblem,
   KnowledgeTopic,
   KnowledgePattern,
@@ -25,6 +27,9 @@ import {
   FiFileText,
   FiTag,
   FiChevronDown,
+  FiEdit3,
+  FiSave,
+  FiCheck,
 } from "react-icons/fi";
 import { HiOfficeBuilding } from "react-icons/hi";
 import DSASidebar from "@/components/layout/Sidebar";
@@ -460,6 +465,13 @@ interface ProblemRowProps {
   onExpand: (probId: string | number, section: ExpandSection) => void;
   tagsCache: Map<string | number, ProblemTag[]>;
   loadingTagIds: Set<string | number>;
+  // Per-user note state
+  noteValue: string;
+  isNoteLoading: boolean;
+  isSavingNote: boolean;
+  noteSaved: boolean;
+  onNoteChange: (probId: string | number, value: string) => void;
+  onSaveNote: (probId: string | number) => void;
 }
 
 const ProblemRow: React.FC<ProblemRowProps> = ({
@@ -472,9 +484,14 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
   onExpand,
   tagsCache,
   loadingTagIds,
+  noteValue,
+  isNoteLoading,
+  isSavingNote,
+  noteSaved,
+  onNoteChange,
+  onSaveNote,
 }) => {
   const isExpanded = expandedRowId === prob.id;
-  const hasNotes = Boolean(prob.notes?.trim());
   const tags = tagsCache.get(prob.id) ?? [];
   const companyTags = tags.filter((t) => t.tag_type === "company");
   const topicTags = tags.filter((t) => t.tag_type === "topic");
@@ -508,7 +525,7 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
               target="_blank"
               rel="noopener noreferrer"
               className={`text-sm font-bold transition-all truncate ${isSolved
-                  ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
+                  ? "text-[#a0aec0] dark:text-[#64748b] decoration-[#a7c7b3] dark:decoration-[#334155]"
                   : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
                 }`}
             >
@@ -529,19 +546,19 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
 
         {/* Right Side: Action buttons */}
         <div className="flex items-center gap-1.5 shrink-0 pl-10 sm:pl-12 lg:pl-0 flex-wrap">
-          {hasNotes && (
-            <button
-              onClick={() => onExpand(prob.id, "notes")}
-              className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "notes"
-                  ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
-                  : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
-                }`}
-            >
-              <FiFileText size={10} />
-              Notes
-              <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`} />
-            </button>
-          )}
+          {/* Notes button — always visible */}
+          <button
+            onClick={() => onExpand(prob.id, "notes")}
+            className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+              isExpanded && expandedSection === "notes"
+                ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
+                : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
+            }`}
+          >
+            <FiEdit3 size={10} />
+            Notes
+            <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`} />
+          </button>
 
           <button
             onClick={() => onExpand(prob.id, "companies")}
@@ -580,17 +597,58 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
       </div>
 
       {/* Expandable detail panel */}
-      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}`}>
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 pt-1">
           {expandedSection === "notes" && (
             <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40 p-3 sm:p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <FiFileText size={12} className="text-violet-600 dark:text-violet-400" />
-                <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Notes</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <FiEdit3 size={12} className="text-violet-600 dark:text-violet-400" />
+                  <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">My Notes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[9px] font-medium transition-colors ${
+                    noteValue.length > 9000 ? "text-rose-500" : "text-[#a0aec0] dark:text-[#64748b]"
+                  }`}>
+                    {noteValue.length} / 10,000
+                  </span>
+                  <button
+                    onClick={() => onSaveNote(prob.id)}
+                    disabled={isSavingNote || isNoteLoading}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
+                      noteSaved
+                        ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/50"
+                        : isSavingNote
+                        ? "bg-violet-50 text-violet-400 border-violet-200 dark:bg-violet-900/20 dark:text-violet-500 dark:border-violet-800/30 cursor-wait"
+                        : "bg-violet-600 text-white border-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 active:scale-95 shadow-sm"
+                    }`}
+                  >
+                    {noteSaved ? (
+                      <><FiCheck size={10} /> Saved!</>
+                    ) : isSavingNote ? (
+                      <><div className="w-2.5 h-2.5 border border-violet-400 border-t-transparent rounded-full animate-spin" /> Saving…</>
+                    ) : (
+                      <><FiSave size={10} /> Save</>  
+                    )}
+                  </button>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-[#374151] dark:text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
-                {prob.notes || "No notes available."}
-              </p>
+              {isNoteLoading ? (
+                <div className="flex items-center gap-2 py-2 justify-center">
+                  <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-xs text-violet-500 dark:text-violet-400">Loading note…</span>
+                </div>
+              ) : (
+                <textarea
+                  value={noteValue}
+                  onChange={(e) => onNoteChange(prob.id, e.target.value)}
+                  maxLength={10000}
+                  rows={5}
+                  placeholder="Write your notes, approach, or key insights here…"
+                  className="w-full resize-y text-xs sm:text-sm text-[#374151] dark:text-[#d1d5db] bg-white dark:bg-[#1c2630] border border-violet-200 dark:border-violet-800/50 rounded-lg p-3 leading-relaxed placeholder-[#a0aec0] dark:placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:focus:ring-violet-600/50 focus:border-violet-400 dark:focus:border-violet-600 transition-all"
+                  style={{ minHeight: 100 }}
+                />
+              )}
             </div>
           )}
 
@@ -663,9 +721,22 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   const [tagsCache, setTagsCache] = useState<Map<string | number, ProblemTag[]>>(new Map());
   const [loadingTagIds, setLoadingTagIds] = useState<Set<string | number>>(new Set());
 
+  // ── Per-user notes state ───────────────────────────────────────────────────
+  const [notesCache, setNotesCache] = useState<Map<string | number, string>>(new Map());
+  const [loadingNoteIds, setLoadingNoteIds] = useState<Set<string | number>>(new Set());
+  const [savingNoteIds, setSavingNoteIds] = useState<Set<string | number>>(new Set());
+  const [savedNoteIds, setSavedNoteIds] = useState<Set<string | number>>(new Set());
+  // Debounce timers for "Saved!" flash reset
+  const savedTimers = React.useRef<Map<string | number, ReturnType<typeof setTimeout>>>(new Map());
+
   useEffect(() => {
     setExpandedRowId(null);
     setExpandedSection(null);
+    // Clear note states when navigating away
+    setNotesCache(new Map());
+    setLoadingNoteIds(new Set());
+    setSavingNoteIds(new Set());
+    setSavedNoteIds(new Set());
   }, [activePattern?.id]);
 
   const handleExpand = async (probId: string | number, section: ExpandSection) => {
@@ -677,6 +748,22 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
 
     setExpandedRowId(probId);
     setExpandedSection(section);
+
+    // Fetch user note if opening notes section and not yet loaded
+    if (section === "notes" && !notesCache.has(probId)) {
+      setLoadingNoteIds((prev) => new Set(prev).add(probId));
+      try {
+        const note = await fetchUserNote(probId);
+        setNotesCache((prev) => new Map(prev).set(probId, note));
+      } catch (err) {
+        console.error("Failed to fetch note:", err);
+        setNotesCache((prev) => new Map(prev).set(probId, ""));
+      } finally {
+        setLoadingNoteIds((prev) => {
+          const s = new Set(prev); s.delete(probId); return s;
+        });
+      }
+    }
 
     if ((section === "companies" || section === "topic") && !tagsCache.has(probId)) {
       setLoadingTagIds((prev) => new Set(prev).add(probId));
@@ -693,6 +780,34 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
           return s;
         });
       }
+    }
+  };
+
+  const handleNoteChange = (probId: string | number, value: string) => {
+    setNotesCache((prev) => new Map(prev).set(probId, value));
+    // Clear the "Saved!" flash if user starts editing again
+    setSavedNoteIds((prev) => {
+      const s = new Set(prev); s.delete(probId); return s;
+    });
+  };
+
+  const handleSaveNote = async (probId: string | number) => {
+    const note = notesCache.get(probId) ?? "";
+    setSavingNoteIds((prev) => new Set(prev).add(probId));
+    try {
+      await saveUserNote(probId, note);
+      setSavedNoteIds((prev) => new Set(prev).add(probId));
+      // Clear "Saved!" flash after 2.5s
+      const existing = savedTimers.current.get(probId);
+      if (existing) clearTimeout(existing);
+      const timer = setTimeout(() => {
+        setSavedNoteIds((prev) => { const s = new Set(prev); s.delete(probId); return s; });
+      }, 2500);
+      savedTimers.current.set(probId, timer);
+    } catch (err) {
+      console.error("Failed to save note:", err);
+    } finally {
+      setSavingNoteIds((prev) => { const s = new Set(prev); s.delete(probId); return s; });
     }
   };
 
@@ -757,6 +872,12 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
                 onExpand={handleExpand}
                 tagsCache={tagsCache}
                 loadingTagIds={loadingTagIds}
+                noteValue={notesCache.get(prob.id) ?? ""}
+                isNoteLoading={loadingNoteIds.has(prob.id)}
+                isSavingNote={savingNoteIds.has(prob.id)}
+                noteSaved={savedNoteIds.has(prob.id)}
+                onNoteChange={handleNoteChange}
+                onSaveNote={handleSaveNote}
               />
             ))}
           </div>

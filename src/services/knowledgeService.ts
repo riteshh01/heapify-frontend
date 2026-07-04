@@ -15,7 +15,7 @@
  * applied automatically to every request.
  */
 
-import { get, post } from "./api";
+import { get, post, patch } from "./api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -197,6 +197,24 @@ export async function toggleProblem(problemId: string | number): Promise<void> {
     { problemId }
   );
   if (!data.success) throw new Error(data.message || "Failed to toggle progress");
+}
+
+/** GET /knowledge/problems/:problemId/note — fetch user's personal note (JWT protected) */
+export async function fetchUserNote(problemId: string | number): Promise<string> {
+  const data = await get<{ success: boolean; note: string; message?: string }>(
+    `/knowledge/problems/${problemId}/note`
+  );
+  if (!data.success) throw new Error(data.message || "Failed to fetch note");
+  return data.note;
+}
+
+/** PATCH /knowledge/problems/:problemId/note — save user's personal note (JWT protected) */
+export async function saveUserNote(problemId: string | number, note: string): Promise<void> {
+  const data = await patch<{ success: boolean; message?: string }>(
+    `/knowledge/problems/${problemId}/note`,
+    { note }
+  );
+  if (!data.success) throw new Error(data.message || "Failed to save note");
 }
 
 /** Convenience: total solved count across all DSA problems */
