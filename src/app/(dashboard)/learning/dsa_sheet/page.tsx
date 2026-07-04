@@ -96,9 +96,6 @@ const DSASheet: React.FC = () => {
     if (hasFetchedRef.current) return;
     hasFetchedRef.current = true;
 
-    // ── Fire topics and progress IN PARALLEL immediately on mount — no auth gate ──
-    // Cookies are in the browser; api.ts interceptor handles 401→refresh.
-    // Both run concurrently; the page spinner drops only after both resolve.
     let topicsDone = false;
     let progressDone = false;
 
@@ -111,7 +108,6 @@ const DSASheet: React.FC = () => {
         setDsaTopics(topics);
         topicsDone = true;
         checkDone();
-        // Background pattern prefetch — patterns are cached before user clicks
         prefetchAllPatterns(topics);
       })
       .catch((err) => {
@@ -161,11 +157,19 @@ const DSASheet: React.FC = () => {
     }
   };
 
+  // ── Helper to close sidebar on mobile screens ─────────────────────────────
+  const closeSidebarOnMobile = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   // ── Navigation helpers ────────────────────────────────────────────────────
   const handleDashboardClick = () => {
     setView("dashboard");
     setActiveTopicId(null);
     setActivePatternId(null);
+    closeSidebarOnMobile();
   };
 
   const handleTopicClick = async (topicId: string | number) => {
@@ -188,6 +192,7 @@ const DSASheet: React.FC = () => {
   const handlePatternClick = async (patternId: string | number) => {
     setView("pattern");
     setActivePatternId(patternId);
+    closeSidebarOnMobile();
 
     if (!problemsCache.has(patternId)) {
       setLoadingPatternIds((prev) => new Set(prev).add(patternId));
@@ -228,8 +233,8 @@ const DSASheet: React.FC = () => {
   // ── Error state ───────────────────────────────────────────────────────────
   if (fetchError) {
     return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#e8f5ee] dark:bg-[#0d1117]">
-        <div className="max-w-md text-center bg-white dark:bg-[#161b22] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm">
+      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#e8f5ee] dark:bg-[#0d1117] p-4">
+        <div className="w-full max-w-md text-center bg-white dark:bg-[#161b22] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-6 sm:p-8 shadow-sm">
           <FiAlertCircle size={36} className="text-rose-500 dark:text-rose-400 mx-auto mb-4" />
           <h2 className="font-bold text-xl text-[#1a202c] dark:text-[#f0f6fc] mb-2">Could not load data</h2>
           <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mb-6">{fetchError}</p>
@@ -244,29 +249,40 @@ const DSASheet: React.FC = () => {
     );
   }
 
-  // ── Main render — layout is shown immediately ──────────────────────────────
+  // ── Main render ──────────────────────────────
   return (
-    <div className="flex h-[calc(100vh-56px)] bg-[#e8f5ee] dark:bg-[#0d1117] text-[#2d3748] dark:text-[#e2e8f0] overflow-hidden font-sans transition-colors duration-300">
+    <div className="flex h-[calc(100vh-56px)] bg-[#e8f5ee] dark:bg-[#0d1117] text-[#2d3748] dark:text-[#e2e8f0] overflow-hidden font-sans transition-colors duration-300 relative">
 
-      {/* Sidebar */}
-      <DSASidebar
-        isSidebarOpen={isSidebarOpen}
-        view={view}
-        handleDashboardClick={handleDashboardClick}
-        handleTopicClick={handleTopicClick}
-        handlePatternClick={handlePatternClick}
-        activeTopicId={activeTopicId}
-        activePatternId={activePatternId}
-        expandedTopics={expandedTopics}
-        dsaTopics={dsaTopics}
-        patternsCache={patternsCache}
-      />
+      {/* Sidebar Wrapper (Added h-full and overflow-y-auto to make it scrollable) */}
+      <div className={`
+        ${isSidebarOpen ? 'absolute inset-0 z-50 w-full bg-[#e8f5ee] dark:bg-[#0d1117] lg:relative lg:w-auto lg:z-auto lg:bg-transparent' : 'hidden lg:block'}
+        transition-all duration-300 ease-in-out h-full overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]
+      `}>
+        {/* Helper div to force inner components to take full width on mobile */}
+        <div className="w-full min-h-full [&>aside]:w-full [&>div]:w-full lg:[&>aside]:w-auto lg:[&>div]:w-auto flex flex-col">
+          <DSASidebar
+            isSidebarOpen={isSidebarOpen}
+            view={view}
+            handleDashboardClick={handleDashboardClick}
+            handleTopicClick={handleTopicClick}
+            handlePatternClick={handlePatternClick}
+            activeTopicId={activeTopicId}
+            activePatternId={activePatternId}
+            expandedTopics={expandedTopics}
+            dsaTopics={dsaTopics}
+            patternsCache={patternsCache}
+          />
+        </div>
+      </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative bg-[#f4fcf7] dark:bg-[#161b22] m-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm transition-colors duration-300 [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]">
-
+      {/* Hidden on mobile if sidebar is open to keep layout clean */}
+      <main className={`
+        flex-1 overflow-y-auto relative bg-[#f4fcf7] dark:bg-[#161b22] m-0 sm:m-2 rounded-none sm:rounded-2xl border-0 sm:border border-[#d1e8d8] dark:border-[#30363d] shadow-sm transition-colors duration-300 [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]
+        ${isSidebarOpen ? 'hidden lg:block' : 'block'}
+      `}>
         {/* Header */}
-        <header className="sticky top-0 z-20 bg-[#f4fcf7] dark:bg-[#161b22] border-b border-[#d1e8d8] dark:border-[#30363d] p-4 flex items-center justify-between transition-colors duration-300">
+        <header className="sticky top-0 z-20 bg-[#f4fcf7] dark:bg-[#161b22] border-b border-[#d1e8d8] dark:border-[#30363d] p-3 sm:p-4 flex items-center justify-between transition-colors duration-300">
           <button
             onClick={() => setSidebarOpen(!isSidebarOpen)}
             className="p-2 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-xl shadow-sm hover:bg-[#e8f5ee] dark:hover:bg-[#30363d] active:scale-95 transition-all duration-200"
@@ -277,15 +293,15 @@ const DSASheet: React.FC = () => {
               : <FiMenu size={18} className="text-[#4a5568] dark:text-[#8b949e]" />}
           </button>
 
-          <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm transition-colors duration-300">
+          <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm transition-colors duration-300">
             <FiTrendingUp className="text-emerald-600 dark:text-emerald-400" size={14} />
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
-              {solvedProblems.size} Problems Solved
+            <span className="text-[10px] sm:text-xs font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
+              {solvedProblems.size} Solved
             </span>
           </div>
         </header>
 
-        <div className="max-w-5xl mx-auto px-6 py-8 md:px-8 md:py-10">
+        <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10">
           {view === "dashboard" ? (
             <DashboardView
               progressSummary={progressSummary}
@@ -308,8 +324,6 @@ const DSASheet: React.FC = () => {
 };
 
 // ─── Difficulty Arc Chart ─────────────────────────────────────────────────────
-// A unique segmented-arc chart styled differently from LeetCode:
-// three concentric arcs (easy / medium / hard) fill up based on solved ratio.
 
 function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblems }: DashboardViewProps) {
   const summary = progressSummary;
@@ -322,8 +336,6 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
 
   const overallPct = totalProblems > 0 ? (totalSolved / totalProblems) : 0;
 
-  // SVG arc helper — draws a partial circle arc
-  // cx, cy = center; r = radius; pct = 0..1 fill ratio; startAngle in degrees
   function describeArc(cx: number, cy: number, r: number, pct: number, startAngle = -210, sweepAngle = 240) {
     const clamp = Math.min(Math.max(pct, 0), 0.9999);
     const start = (startAngle * Math.PI) / 180;
@@ -336,7 +348,6 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
     return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
   }
 
-  // Track arc (gray background)
   function trackArc(cx: number, cy: number, r: number, startAngle = -210, sweepAngle = 240) {
     return describeArc(cx, cy, r, 1, startAngle, sweepAngle);
   }
@@ -345,55 +356,40 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
   const cy = 110;
 
   return (
-    <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
+    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14">
       {/* SVG Arc chart */}
-      <div className="relative shrink-0">
-        <svg width={220} height={220} viewBox="0 0 220 220">
-          {/* Easy — outermost arc */}
-          <path d={trackArc(cx, cy, 90)} fill="none" stroke="#d1fae5" strokeWidth={10} strokeLinecap="round"
-            className="dark:stroke-emerald-900/40" />
-          <path d={describeArc(cx, cy, 90, easy.total > 0 ? easy.solved / easy.total : 0)}
-            fill="none" stroke="#10b981" strokeWidth={10} strokeLinecap="round"
-            className="transition-all duration-700" />
+      <div className="relative shrink-0 flex justify-center w-full md:w-auto">
+        <svg width={220} height={220} viewBox="0 0 220 220" className="max-w-full">
+          {/* Easy */}
+          <path d={trackArc(cx, cy, 90)} fill="none" stroke="#d1fae5" strokeWidth={10} strokeLinecap="round" className="dark:stroke-emerald-900/40" />
+          <path d={describeArc(cx, cy, 90, easy.total > 0 ? easy.solved / easy.total : 0)} fill="none" stroke="#10b981" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
+          {/* Medium */}
+          <path d={trackArc(cx, cy, 73)} fill="none" stroke="#fef3c7" strokeWidth={10} strokeLinecap="round" className="dark:stroke-amber-900/40" />
+          <path d={describeArc(cx, cy, 73, medium.total > 0 ? medium.solved / medium.total : 0)} fill="none" stroke="#f59e0b" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
+          {/* Hard */}
+          <path d={trackArc(cx, cy, 56)} fill="none" stroke="#fee2e2" strokeWidth={10} strokeLinecap="round" className="dark:stroke-rose-900/40" />
+          <path d={describeArc(cx, cy, 56, hard.total > 0 ? hard.solved / hard.total : 0)} fill="none" stroke="#ef4444" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
 
-          {/* Medium — middle arc */}
-          <path d={trackArc(cx, cy, 73)} fill="none" stroke="#fef3c7" strokeWidth={10} strokeLinecap="round"
-            className="dark:stroke-amber-900/40" />
-          <path d={describeArc(cx, cy, 73, medium.total > 0 ? medium.solved / medium.total : 0)}
-            fill="none" stroke="#f59e0b" strokeWidth={10} strokeLinecap="round"
-            className="transition-all duration-700" />
-
-          {/* Hard — innermost arc */}
-          <path d={trackArc(cx, cy, 56)} fill="none" stroke="#fee2e2" strokeWidth={10} strokeLinecap="round"
-            className="dark:stroke-rose-900/40" />
-          <path d={describeArc(cx, cy, 56, hard.total > 0 ? hard.solved / hard.total : 0)}
-            fill="none" stroke="#ef4444" strokeWidth={10} strokeLinecap="round"
-            className="transition-all duration-700" />
-
-          {/* Centre: total solved */}
-          <text x={cx} y={cy - 10} textAnchor="middle" className="fill-[#1a202c] dark:fill-[#f0f6fc]"
-            fontSize={32} fontWeight={800} fontFamily="inherit">
+          {/* Centre */}
+          <text x={cx} y={cy - 10} textAnchor="middle" className="fill-[#1a202c] dark:fill-[#f0f6fc]" fontSize={32} fontWeight={800} fontFamily="inherit">
             {totalSolved}
           </text>
-          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-[#4a5568] dark:fill-[#8b949e]"
-            fontSize={11} fontWeight={600} fontFamily="inherit">
+          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-[#4a5568] dark:fill-[#8b949e]" fontSize={11} fontWeight={600} fontFamily="inherit">
             / {totalProblems}
           </text>
-          <text x={cx} y={cy + 28} textAnchor="middle" className="fill-[#a0aec0] dark:fill-[#64748b]"
-            fontSize={10} fontFamily="inherit" fontWeight={500}>
+          <text x={cx} y={cy + 28} textAnchor="middle" className="fill-[#a0aec0] dark:fill-[#64748b]" fontSize={10} fontFamily="inherit" fontWeight={500}>
             solved
           </text>
 
-          {/* Overall % badge at bottom of arc */}
-          <text x={cx} y={200} textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400"
-            fontSize={12} fontWeight={700} fontFamily="inherit">
+          {/* Bottom Badge */}
+          <text x={cx} y={200} textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400" fontSize={12} fontWeight={700} fontFamily="inherit">
             {Math.round(overallPct * 100)}% complete
           </text>
         </svg>
       </div>
 
       {/* Difficulty legend + bars */}
-      <div className="flex-1 space-y-5 w-full max-w-sm">
+      <div className="flex-1 space-y-4 md:space-y-5 w-full max-w-sm">
         {([
           { label: "Easy", data: easy, color: "bg-emerald-500", track: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", badge: "bg-emerald-100/80 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/50" },
           { label: "Medium", data: medium, color: "bg-amber-400", track: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", badge: "bg-amber-100/80 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/50" },
@@ -412,24 +408,21 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
                 </div>
               </div>
               <div className={`w-full h-2.5 ${track} rounded-full overflow-hidden`}>
-                <div
-                  className={`h-full ${color} rounded-full transition-all duration-700`}
-                  style={{ width: `${pct}%` }}
-                />
+                <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
               </div>
             </div>
           );
         })}
 
         {/* Overall stats row */}
-        <div className="pt-4 border-t border-[#d1e8d8] dark:border-[#30363d] grid grid-cols-2 gap-3">
-          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-2xl p-4 border border-[#d1e8d8] dark:border-[#30363d]">
+        <div className="pt-4 border-t border-[#d1e8d8] dark:border-[#30363d] grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
             <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Solved</div>
-            <div className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalSolved}</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalSolved}</div>
           </div>
-          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-2xl p-4 border border-[#d1e8d8] dark:border-[#30363d]">
+          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
             <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Problems</div>
-            <div className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalProblems}</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalProblems}</div>
           </div>
         </div>
       </div>
@@ -441,17 +434,15 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
 
 const DashboardView: React.FC<DashboardViewProps> = (props) => (
   <div>
-    <div className="mb-8 border-b border-[#d1e8d8] dark:border-[#30363d] pb-6">
-      <h1 className="text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight mb-2">
+    <div className="mb-6 sm:mb-8 border-b border-[#d1e8d8] dark:border-[#30363d] pb-4 sm:pb-6">
+      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight mb-2">
         DSA Progress Tracker
       </h1>
-      <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
+      <p className="text-xs sm:text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
         Track your problem-solving journey across all difficulty levels.
       </p>
     </div>
-
-    {/* Difficulty progress chart */}
-    <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm p-8">
+    <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl sm:rounded-3xl shadow-sm p-5 sm:p-8">
       <DifficultyArcChart {...props} />
     </div>
   </div>
@@ -490,117 +481,98 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
   const isLoadingTags = loadingTagIds.has(prob.id);
 
   return (
-    <div
-      className={`border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 transition-colors duration-200 ${isExpanded ? "bg-[#f0faf4] dark:bg-[#1c2630]" : "hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50"
-        }`}
-    >
+    <div className={`border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 transition-colors duration-200 ${isExpanded ? "bg-[#f0faf4] dark:bg-[#1c2630]" : "hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50"}`}>
       {/* Main row */}
-      <div className="px-6 py-4 flex items-center gap-3 group">
-        {/* Index */}
-        <span className="text-[11px] font-bold text-[#a0aec0] dark:text-[#8b949e] w-5 text-right shrink-0">
-          {idx + 1}
-        </span>
-
-        {/* Checkbox */}
-        <button
-          onClick={() => onToggle(prob.id)}
-          className="transition-all hover:scale-110 shrink-0 outline-none"
-          title={isSolved ? "Mark as unsolved" : "Mark as solved"}
-        >
-          {isSolved ? (
-            <FiCheckCircle className="text-emerald-500 dark:text-emerald-400" size={20} />
-          ) : (
-            <FiCircle className="text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-500 dark:hover:text-emerald-500 transition-colors" size={20} />
-          )}
-        </button>
-
-        {/* Title + Difficulty */}
-        <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-2 min-w-0">
-          <a
-            href={prob.problemLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`text-sm font-bold transition-all truncate ${isSolved
-                ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
-                : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
-              }`}
-          >
-            {prob.title}
-          </a>
-          <span
-            className={`text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border ${prob.difficulty === "easy"
-                ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
-                : prob.difficulty === "medium"
-                  ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
-                  : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
-              }`}
-          >
-            {prob.difficulty}
+      <div className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col lg:flex-row lg:items-center gap-2 sm:gap-3 group">
+        
+        {/* Left Side: Index, Checkbox, Title & Difficulty */}
+        <div className="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0">
+          <span className="text-[10px] sm:text-[11px] font-bold text-[#a0aec0] dark:text-[#8b949e] w-4 sm:w-5 text-right shrink-0">
+            {idx + 1}
           </span>
+          <button
+            onClick={() => onToggle(prob.id)}
+            className="transition-all hover:scale-110 shrink-0 outline-none"
+            title={isSolved ? "Mark as unsolved" : "Mark as solved"}
+          >
+            {isSolved ? (
+              <FiCheckCircle className="text-emerald-500 dark:text-emerald-400" size={18} />
+            ) : (
+              <FiCircle className="text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-500 dark:hover:text-emerald-500 transition-colors" size={18} />
+            )}
+          </button>
+
+          <div className="flex flex-1 flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0">
+            <a
+              href={prob.problemLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`text-sm font-bold transition-all truncate ${isSolved
+                  ? "text-[#a0aec0] dark:text-[#64748b] line-through decoration-[#a7c7b3] dark:decoration-[#334155]"
+                  : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
+                }`}
+            >
+              {prob.title}
+            </a>
+            <span
+              className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border w-max ${prob.difficulty === "easy"
+                  ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
+                  : prob.difficulty === "medium"
+                    ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
+                    : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
+                }`}
+            >
+              {prob.difficulty}
+            </span>
+          </div>
         </div>
 
-        {/* Action buttons */}
-        <div className="flex items-center gap-1.5 shrink-0 ml-1">
-          {/* Notes button — only show if notes exist */}
+        {/* Right Side: Action buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 pl-10 sm:pl-12 lg:pl-0 flex-wrap">
           {hasNotes && (
             <button
               onClick={() => onExpand(prob.id, "notes")}
-              title="View notes"
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "notes"
+              className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "notes"
                   ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
                   : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
                 }`}
             >
               <FiFileText size={10} />
               Notes
-              <FiChevronDown
-                size={9}
-                className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`}
-              />
+              <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`} />
             </button>
           )}
 
-          {/* Companies button */}
           <button
             onClick={() => onExpand(prob.id, "companies")}
-            title="View company tags"
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "companies"
+            className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "companies"
                 ? "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
                 : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
               }`}
           >
             <HiOfficeBuilding size={10} />
             Companies
-            <FiChevronDown
-              size={9}
-              className={`transition-transform duration-200 ${isExpanded && expandedSection === "companies" ? "rotate-180" : ""}`}
-            />
+            <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "companies" ? "rotate-180" : ""}`} />
           </button>
 
-          {/* Topic tags button */}
           <button
             onClick={() => onExpand(prob.id, "topic")}
-            title="View topic tags"
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "topic"
+            className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${isExpanded && expandedSection === "topic"
                 ? "bg-orange-100 text-orange-700 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
                 : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:text-orange-400"
               }`}
           >
             <FiTag size={10} />
             Topics
-            <FiChevronDown
-              size={9}
-              className={`transition-transform duration-200 ${isExpanded && expandedSection === "topic" ? "rotate-180" : ""}`}
-            />
+            <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "topic" ? "rotate-180" : ""}`} />
           </button>
 
-          {/* External link */}
           <a
             href={prob.problemLink}
             target="_blank"
             rel="noopener noreferrer"
             title="Open problem"
-            className="p-1.5 rounded-lg text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
+            className="p-1.5 rounded-lg text-[#a7c7b3] dark:text-[#64748b] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all ml-auto lg:ml-0"
           >
             <FiExternalLink size={14} />
           </a>
@@ -608,51 +580,37 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
       </div>
 
       {/* Expandable detail panel */}
-      <div
-        className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-      >
-        <div className="px-6 pb-5 pt-1">
-          {/* Notes section */}
+      <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="px-4 sm:px-6 pb-4 sm:pb-5 pt-1">
           {expandedSection === "notes" && (
-            <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40 p-4">
+            <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40 p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2">
                 <FiFileText size={12} className="text-violet-600 dark:text-violet-400" />
-                <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">
-                  Notes
-                </span>
+                <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">Notes</span>
               </div>
-              <p className="text-sm text-[#374151] dark:text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
+              <p className="text-xs sm:text-sm text-[#374151] dark:text-[#d1d5db] leading-relaxed whitespace-pre-wrap">
                 {prob.notes || "No notes available."}
               </p>
             </div>
           )}
 
-          {/* Companies section */}
           {expandedSection === "companies" && (
-            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 p-4">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <HiOfficeBuilding size={12} className="text-blue-600 dark:text-blue-400" />
-                <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
-                  Asked By Companies
-                </span>
+                <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wider">Asked By Companies</span>
               </div>
               {isLoadingTags ? (
-                <div className="flex items-center gap-2 text-sm text-blue-500 dark:text-blue-400">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-blue-500 dark:text-blue-400">
                   <div className="w-3.5 h-3.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
                   Loading...
                 </div>
               ) : companyTags.length === 0 ? (
-                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">
-                  No company tags for this problem yet.
-                </p>
+                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">No company tags for this problem yet.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {companyTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors"
-                    >
+                    <span key={tag.id} className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors">
                       {tag.name}
                     </span>
                   ))}
@@ -661,31 +619,23 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
             </div>
           )}
 
-          {/* Topic tags section */}
           {expandedSection === "topic" && (
-            <div className="rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 p-4">
-              <div className="flex items-center gap-2 mb-3">
+            <div className="rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 p-3 sm:p-4">
+              <div className="flex items-center gap-2 mb-2 sm:mb-3">
                 <FiTag size={12} className="text-orange-600 dark:text-orange-400" />
-                <span className="text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
-                  Topic Tags
-                </span>
+                <span className="text-[10px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wider">Topic Tags</span>
               </div>
               {isLoadingTags ? (
-                <div className="flex items-center gap-2 text-sm text-orange-500 dark:text-orange-400">
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-orange-500 dark:text-orange-400">
                   <div className="w-3.5 h-3.5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
                   Loading...
                 </div>
               ) : topicTags.length === 0 ? (
-                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">
-                  No topic tags for this problem yet.
-                </p>
+                <p className="text-xs text-[#6b7280] dark:text-[#9ca3af] italic">No topic tags for this problem yet.</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {topicTags.map((tag) => (
-                    <span
-                      key={tag.id}
-                      className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors"
-                    >
+                    <span key={tag.id} className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 hover:bg-orange-200 dark:hover:bg-orange-900/60 transition-colors">
                       {tag.name}
                     </span>
                   ))}
@@ -713,25 +663,21 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   const [tagsCache, setTagsCache] = useState<Map<string | number, ProblemTag[]>>(new Map());
   const [loadingTagIds, setLoadingTagIds] = useState<Set<string | number>>(new Set());
 
-  // Reset expansion when pattern changes
   useEffect(() => {
     setExpandedRowId(null);
     setExpandedSection(null);
   }, [activePattern?.id]);
 
   const handleExpand = async (probId: string | number, section: ExpandSection) => {
-    // Toggle off if same row + same section
     if (expandedRowId === probId && expandedSection === section) {
       setExpandedRowId(null);
       setExpandedSection(null);
       return;
     }
 
-    // Switch row or section
     setExpandedRowId(probId);
     setExpandedSection(section);
 
-    // Fetch tags lazily for companies / topic sections
     if ((section === "companies" || section === "topic") && !tagsCache.has(probId)) {
       setLoadingTagIds((prev) => new Set(prev).add(probId));
       try {
@@ -751,7 +697,6 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   };
 
   if (!activePattern) return null;
-
   if (isLoading) return <DSALoader />;
 
   const solvedCount = problems.filter((p) => solvedProblems.has(p.id)).length;
@@ -759,22 +704,21 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   return (
     <div>
       {/* Pattern Header */}
-      <div className="mb-8 p-6 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm">
-        <p className="text-[11px] text-[#4a5568] dark:text-[#8b949e] uppercase font-bold tracking-[0.15em] mb-2">
+      <div className="mb-6 sm:mb-8 p-4 sm:p-6 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl sm:rounded-3xl shadow-sm">
+        <p className="text-[10px] sm:text-[11px] text-[#4a5568] dark:text-[#8b949e] uppercase font-bold tracking-[0.15em] mb-2">
           Pattern Breakdown
         </p>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <h1 className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{activePattern.name}</h1>
-          <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50 shrink-0">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{activePattern.name}</h1>
+          <span className="text-[10px] sm:text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50 shrink-0">
             {solvedCount} / {problems.length} solved
           </span>
         </div>
         {activePattern.description && (
-          <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mt-2 leading-relaxed">
+          <p className="text-xs sm:text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mt-2 leading-relaxed">
             {activePattern.description}
           </p>
         )}
-        {/* Mini progress bar */}
         {problems.length > 0 && (
           <div className="mt-4 w-full h-1.5 bg-[#e8f5ee] dark:bg-[#0d1117] rounded-full overflow-hidden">
             <div
@@ -786,9 +730,9 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
       </div>
 
       {/* Problems List */}
-      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm overflow-hidden">
-        {/* Column header */}
-        <div className="px-6 py-2.5 bg-[#f4fcf7] dark:bg-[#1c2228] border-b border-[#e8f5ee] dark:border-[#30363d] flex items-center gap-3">
+      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl sm:rounded-3xl shadow-sm overflow-hidden">
+        {/* Column header - Hidden on mobile for cleaner card-like stacked view */}
+        <div className="px-6 py-2.5 bg-[#f4fcf7] dark:bg-[#1c2228] border-b border-[#e8f5ee] dark:border-[#30363d] items-center gap-3 hidden lg:flex">
           <span className="w-5" />
           <span className="w-5" />
           <span className="flex-1 text-[10px] font-bold text-[#6b7280] dark:text-[#8b949e] uppercase tracking-wider">Problem</span>
@@ -796,7 +740,7 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
         </div>
 
         {problems.length === 0 ? (
-          <div className="p-10 text-center text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
+          <div className="p-8 sm:p-10 text-center text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
             No problems found for this pattern.
           </div>
         ) : (
