@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext, useEffect, FormEvent } from "react";
+import { useState, useContext, useEffect, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
@@ -38,7 +38,10 @@ export default function EmailVerifyPage() {
   const userEmail = authContext?.userEmail || "";
   const maskedEmail = authContext?.maskedEmail || "";
 
-  const [otp, setOtp] = useState("");
+  // 6 boxes ke liye array state aur refs
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [otpCooldown, setOtpCooldown] = useState(0);
@@ -51,13 +54,69 @@ export default function EmailVerifyPage() {
     }
   }, [otpCooldown]);
 
-  // Handle OTP verification
+  // Handle Input Change for specific box
+  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ""); // Sirf numbers allow karega
+    if (!value && e.target.value !== "") return;
+
+    const newOtp = [...otp];
+    // Agar multiple characters (e.g. typing fast), toh last char lega
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
+
+    // Agle box par focus move karo agar value dali hai aur last box nahi hai
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Handle Backspace & Navigation keys
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!otp[index] && index > 0) {
+        // Agar current box khali hai aur backspace dabaya, toh pichle box pe jao
+        inputRefs.current[index - 1]?.focus();
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+      } else {
+        // Current box ki value clear karo
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Handle Paste event so user can copy-paste whole 6 digit code
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").replace(/\D/g, "").slice(0, 6);
+    if (pastedData) {
+      const newOtp = [...otp];
+      for (let i = 0; i < pastedData.length; i++) {
+        newOtp[i] = pastedData[i];
+      }
+      setOtp(newOtp);
+      // Focus on the next empty box or the last box
+      const focusIndex = pastedData.length < 6 ? pastedData.length : 5;
+      inputRefs.current[focusIndex]?.focus();
+    }
+  };
+
+  // Final submit handler
   const handleVerifyOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const otpString = otp.join("");
+    
     try {
       setLoading(true);
 
-      if (!otp || otp.length !== 6) {
+      if (otpString.length !== 6) {
         notifyFn("Please enter a valid 6-digit OTP", { type: "error" });
         setLoading(false);
         return;
@@ -67,7 +126,7 @@ export default function EmailVerifyPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email: userEmail, otp }),
+        body: JSON.stringify({ email: userEmail, otp: otpString }),
       });
 
       const data: VerifyResponse = await response.json();
@@ -121,66 +180,87 @@ export default function EmailVerifyPage() {
     }
   };
 
-  return (
-    <div className="w-full">
-      <div className="bg-white dark:bg-[#1e293b] border border-[#cbd5e1] dark:border-[#334155] rounded-xl shadow-sm p-8 transition-colors duration-300">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 dark:bg-blue-900/30 rounded-full border border-blue-200 dark:border-blue-500/30 mb-4">
-            <svg
-              className="w-8 h-8 text-[#3b5998] dark:text-[#7dd3fc]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-2xl font-bold text-[#1e293b] dark:text-[#f8fafc] mb-2">Verify Your Email</h1>
-          <p className="text-[#64748b] dark:text-[#94a3b8] text-sm">
-            We've sent a verification code to <br />
-            <span className="font-bold text-[#3b5998] dark:text-[#7dd3fc]">{maskedEmail}</span>
-          </p>
-        </div>
+  const isOtpComplete = otp.every((digit) => digit !== "");
 
-        {/* OTP Form */}
-        <form onSubmit={handleVerifyOtp} className="space-y-6">
-          <div>
-            <label className="block text-xs font-bold text-[#475569] dark:text-[#cbd5e1] mb-2">
+  return (
+    <div className="w-full pb-4">
+      {/* Header Section */}
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="h-10 w-10 mb-3 rounded-2xl bg-emerald-500 dark:bg-emerald-500 flex items-center justify-center font-bold text-white shadow-md">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight text-center">
+          Verify Your Email
+        </h2>
+        <p className="text-xs font-medium text-[#4a5568] dark:text-[#8b949e] mt-1 text-center leading-relaxed">
+          We've sent a verification code to <br />
+          <span className="font-bold text-emerald-500 dark:text-emerald-400">{maskedEmail}</span>
+        </p>
+      </div>
+
+      {/* Solid Form Card */}
+      <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-3xl shadow-sm overflow-hidden p-5 sm:p-7 transition-colors duration-300">
+        <form onSubmit={handleVerifyOtp} className="flex flex-col gap-6">
+          
+          {/* OTP Multi-box Input */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e] uppercase tracking-wider text-center mb-1">
               Enter 6-digit OTP
             </label>
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="000000"
-              maxLength={6}
-              className="w-full px-4 py-3 bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] text-center text-lg tracking-widest font-bold transition-all"
-            />
+            <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-10 h-12 sm:w-12 sm:h-14 bg-[#f0f3f6] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl text-center text-xl sm:text-2xl font-bold text-[#1a202c] dark:text-[#f0f6fc] focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-sm"
+                />
+              ))}
+            </div>
           </div>
 
-          {/* Submit Button */}
+          {/* Submit Button (Bright Green) */}
           <button
             type="submit"
-            disabled={loading || otp.length !== 6}
-            className="w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] text-white font-bold text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={loading || !isOtpComplete}
+            className={`w-full flex h-12 items-center justify-center rounded-xl px-6 font-bold text-white text-sm transition-all shadow-md active:scale-[0.98] 
+              ${isOtpComplete && !loading
+                ? "bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-500 dark:hover:bg-emerald-400" 
+                : "bg-emerald-400/60 dark:bg-emerald-600/40 cursor-not-allowed opacity-80"
+              }`}
           >
             {loading ? "Verifying..." : "Verify Email"}
           </button>
         </form>
 
         {/* Resend OTP */}
-        <div className="mt-6 text-center">
-          <p className="text-[#64748b] dark:text-[#94a3b8] text-sm mb-3 font-semibold">Didn't receive the code?</p>
+        <div className="mt-5 text-center flex flex-col items-center gap-1">
+          <p className="text-[11px] font-semibold text-[#4a5568] dark:text-[#8b949e]">
+            Didn't receive the code?
+          </p>
           <button
             onClick={handleResendOtp}
             disabled={resendLoading || otpCooldown > 0}
-            className="text-[#3b5998] dark:text-[#7dd3fc] hover:underline disabled:text-[#94a3b8] dark:disabled:text-[#64748b] disabled:cursor-not-allowed font-bold text-sm transition-colors"
+            className="text-[12px] font-bold text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:underline transition-colors disabled:text-[#a0aec0] dark:disabled:text-[#4b5563] disabled:cursor-not-allowed disabled:no-underline"
           >
             {otpCooldown > 0
               ? `Resend in ${otpCooldown}s`
@@ -192,9 +272,9 @@ export default function EmailVerifyPage() {
       </div>
 
       {/* Footer Note */}
-      <p className="text-center text-[#94a3b8] dark:text-[#64748b] text-xs mt-6 font-semibold">
+      <footer className="text-[10px] font-semibold text-[#718096] dark:text-[#8b949e] text-center w-full mt-6">
         This code expires in 15 minutes
-      </p>
+      </footer>
     </div>
   );
 }

@@ -1,22 +1,29 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useContext, useEffect, useRef, FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { AuthContext } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
-import Link from "next/link";
 
-interface ResetResponse {
+interface VerifyResponse {
   success: boolean;
   message: string;
+  data?: {
+    user?: {
+      id: string;
+      email: string;
+      name: string;
+    };
+  };
 }
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
-type Step = "email" | "otp" | "password";
-
-export default function ForgotPasswordPage() {
+export default function EmailVerifyPage() {
   const router = useRouter();
+  const authContext = useContext(AuthContext);
 
+  // Wrap notify in a try-catch to handle context availability
   let notifyFn = (message: string, options?: any) => {
     console.warn("Notification not available, message:", message);
   };
@@ -28,270 +35,245 @@ export default function ForgotPasswordPage() {
     console.error("NotificationContext not available:", e);
   }
 
-  const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const userEmail = authContext?.userEmail || "";
+  const maskedEmail = authContext?.maskedEmail || "";
+
+  // 6 boxes ke liye array state aur refs
+  const [otp, setOtp] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
   const [loading, setLoading] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [otpCooldown, setOtpCooldown] = useState(0);
 
-  const handleCooldown = () => {
-    setResendCooldown(60);
-    const timer = setInterval(() => {
-      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  };
+  // Handle cooldown timer
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setTimeout(() => setOtpCooldown(otpCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [otpCooldown]);
 
-  const handleSendResetOtp = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
+  // Handle Input Change for specific box
+  const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, ""); // Sirf numbers allow karega
+    if (!value && e.target.value !== "") return;
 
-      if (!email) {
-        notifyFn("Please enter your email", { type: "error" });
-        setLoading(false);
-        return;
-      }
+    const newOtp = [...otp];
+    // Agar multiple characters (e.g. typing fast), toh last char lega
+    newOtp[index] = value.substring(value.length - 1);
+    setOtp(newOtp);
 
-      const response = await fetch(`${API_BASE_URL}/send-reset-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email }),
-      });
-
-      const data: ResetResponse = await response.json();
-
-      if (data.success) {
-        notifyFn("Reset OTP sent to your email", { type: "success" });
-        setStep("otp");
-        handleCooldown();
-      } else {
-        notifyFn(data.message || "Failed to send reset OTP", { type: "error" });
-      }
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Something went wrong";
-      notifyFn(errorMessage, { type: "error" });
-    } finally {
-      setLoading(false);
+    // Agle box par focus move karo agar value dali hai aur last box nahi hai
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
     }
   };
 
+  // Handle Backspace & Navigation keys
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace") {
+      if (!otp[index] && index > 0) {
+        // Agar current box khali hai aur backspace dabaya, toh pichle box pe jao
+        inputRefs.current[index - 1]?.focus();
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+      } else {
+        // Current box ki value clear karo
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Handle Paste event so user can copy-paste whole 6 digit code
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").replace(/\D/g, "").slice(0, 6);
+    if (pastedData) {
+      const newOtp = [...otp];
+      for (let i = 0; i < pastedData.length; i++) {
+        newOtp[i] = pastedData[i];
+      }
+      setOtp(newOtp);
+      // Focus on the next empty box or the last box
+      const focusIndex = pastedData.length < 6 ? pastedData.length : 5;
+      inputRefs.current[focusIndex]?.focus();
+    }
+  };
+
+  // Final submit handler
   const handleVerifyOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const otpString = otp.join("");
+    
     try {
       setLoading(true);
 
-      if (!otp || otp.length !== 6) {
+      if (otpString.length !== 6) {
         notifyFn("Please enter a valid 6-digit OTP", { type: "error" });
         setLoading(false);
         return;
       }
 
-      setStep("password");
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Something went wrong";
-      notifyFn(errorMessage, { type: "error" });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    try {
-      setLoading(true);
-
-      if (!newPassword || !confirmPassword) {
-        notifyFn("Please fill in all password fields", { type: "error" });
-        setLoading(false);
-        return;
-      }
-
-      if (newPassword !== confirmPassword) {
-        notifyFn("Passwords do not match", { type: "error" });
-        setLoading(false);
-        return;
-      }
-
-      if (newPassword.length < 8) {
-        notifyFn("Password must be at least 8 characters", { type: "error" });
-        setLoading(false);
-        return;
-      }
-
-      const response = await fetch(`${API_BASE_URL}/reset-password`, {
+      const response = await fetch(`${API_BASE_URL}/verify-account`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, otp, newPassword }),
+        body: JSON.stringify({ email: userEmail, otp: otpString }),
       });
 
-      const data: ResetResponse = await response.json();
+      const data: VerifyResponse = await response.json();
 
       if (data.success) {
-        notifyFn("Password reset successfully! Redirecting to login...", {
+        notifyFn("Email verified successfully! Welcome to Heapify", {
           type: "success",
         });
-        setTimeout(() => router.push("/login"), 2000);
+        if (authContext?.setIsLoggedIn) {
+          authContext.setIsLoggedIn(true);
+        }
+        router.push("/dashboard");
       } else {
-        notifyFn(data.message || "Password reset failed", { type: "error" });
+        notifyFn(data.message || "Verification failed", { type: "error" });
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Something went wrong";
+        error instanceof Error ? error.message : "Verification failed";
       notifyFn(errorMessage, { type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="w-full">
+  // Handle resend OTP
+  const handleResendOtp = async () => {
+    try {
+      setResendLoading(true);
 
-      {/* Brand/Logo Area */}
-      <div className="flex flex-col items-center justify-center mb-8">
-        <div className="h-10 w-10 mb-4 rounded bg-[#3b5998] dark:bg-[#2563eb] flex items-center justify-center font-bold text-white text-lg tracking-tighter shadow-sm">
-          H
+      const response = await fetch(`${API_BASE_URL}/resend-verify-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        notifyFn("OTP resent successfully", { type: "success" });
+        setOtpCooldown(60); // 60 second cooldown
+      } else {
+        notifyFn(data.message || "Failed to resend OTP", { type: "error" });
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to resend OTP";
+      notifyFn(errorMessage, { type: "error" });
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const isOtpComplete = otp.every((digit) => digit !== "");
+
+  return (
+    <div className="w-full pb-4">
+      {/* Header Section */}
+      <div className="flex flex-col items-center justify-center mb-6">
+        <div className="h-10 w-10 mb-3 rounded-2xl bg-emerald-500 dark:bg-emerald-500 flex items-center justify-center font-bold text-white shadow-md">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2.5}
+              d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
         </div>
-        <h2 className="text-2xl font-bold text-[#1e293b] dark:text-[#f8fafc] tracking-tight text-center">
-          Reset Password
+        <h2 className="text-xl sm:text-2xl font-bold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight text-center">
+          Verify Your Email
         </h2>
-        <p className="text-sm text-[#64748b] dark:text-[#94a3b8] mt-2 text-center">
-          {step === "email" && "Enter your email to receive a reset code"}
-          {step === "otp" && "Enter the OTP sent to your email"}
-          {step === "password" && "Create a new strong password"}
+        <p className="text-xs font-medium text-[#4a5568] dark:text-[#8b949e] mt-1 text-center leading-relaxed">
+          We've sent a verification code to <br />
+          <span className="font-bold text-emerald-500 dark:text-emerald-400">{maskedEmail}</span>
         </p>
       </div>
 
-      <div className="bg-white dark:bg-[#1e293b] border border-[#cbd5e1] dark:border-[#334155] rounded-xl shadow-sm overflow-hidden p-8 transition-colors duration-300">
-        
-        {/* Step 1: Email */}
-        {step === "email" && (
-          <form onSubmit={handleSendResetOtp} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="user@example.com"
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
-              />
+      {/* Solid Form Card */}
+      <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-3xl shadow-sm overflow-hidden p-5 sm:p-7 transition-colors duration-300">
+        <form onSubmit={handleVerifyOtp} className="flex flex-col gap-6">
+          
+          {/* OTP Multi-box Input */}
+          <div className="flex flex-col gap-2">
+            <label className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e] uppercase tracking-wider text-center mb-1">
+              Enter 6-digit OTP
+            </label>
+            <div className="flex items-center justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => {
+                    inputRefs.current[index] = el;
+                  }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(index, e)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  className="w-10 h-12 sm:w-12 sm:h-14 bg-[#f0f3f6] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl text-center text-xl sm:text-2xl font-bold text-[#1a202c] dark:text-[#f0f6fc] focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all shadow-sm"
+                />
+              ))}
             </div>
+          </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Sending..." : "Send Reset Code"}
-            </button>
-          </form>
-        )}
+          {/* Submit Button (Bright Green) */}
+          <button
+            type="submit"
+            disabled={loading || !isOtpComplete}
+            className={`w-full flex h-12 items-center justify-center rounded-xl px-6 font-bold text-white text-sm transition-all shadow-md active:scale-[0.98] 
+              ${isOtpComplete && !loading
+                ? "bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-500 dark:hover:bg-emerald-400" 
+                : "bg-emerald-400/60 dark:bg-emerald-600/40 cursor-not-allowed opacity-80"
+              }`}
+          >
+            {loading ? "Verifying..." : "Verify Email"}
+          </button>
+        </form>
 
-        {/* Step 2: OTP */}
-        {step === "otp" && (
-          <form onSubmit={handleVerifyOtp} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
-                Enter 6-Digit OTP
-              </label>
-              <input
-                type="text"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                placeholder="000000"
-                maxLength={6}
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-3 text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all text-center text-lg tracking-[0.5em] font-bold"
-              />
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <button
-                type="submit"
-                disabled={loading || otp.length !== 6}
-                className="w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Verifying..." : "Verify OTP"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep("email")}
-                disabled={resendCooldown > 0}
-                className="text-xs font-bold text-[#3b5998] dark:text-[#7dd3fc] hover:underline disabled:text-[#94a3b8] dark:disabled:text-[#64748b] disabled:cursor-not-allowed transition-colors text-center w-full"
-              >
-                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Didn't receive it? Resend"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Step 3: New Password */}
-        {step === "password" && (
-          <form onSubmit={handleResetPassword} className="flex flex-col gap-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
-                New Password
-              </label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-bold text-[#475569] dark:text-[#cbd5e1]">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="••••••••"
-                className="w-full bg-[#f8fafc] dark:bg-[#0f172a] border border-[#cbd5e1] dark:border-[#334155] rounded px-4 py-2.5 text-sm text-[#333] dark:text-white placeholder:text-[#94a3b8] focus:outline-none focus:border-[#3b5998] dark:focus:border-[#7dd3fc] focus:ring-1 focus:ring-[#3b5998] dark:focus:ring-[#7dd3fc] transition-all"
-              />
-            </div>
-
-            <div className="text-[11px] font-semibold text-[#64748b] dark:text-[#94a3b8] border border-[#cbd5e1] dark:border-[#334155] rounded p-2.5 bg-[#f8fafc] dark:bg-[#0f172a]">
-              Password must be at least 8 characters long
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 w-full flex h-11 items-center justify-center rounded bg-[#3b5998] hover:bg-[#2d4373] dark:bg-[#2563eb] dark:hover:bg-[#1d4ed8] px-6 font-bold text-white text-sm transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Processing..." : "Set New Password"}
-            </button>
-          </form>
-        )}
+        {/* Resend OTP */}
+        <div className="mt-5 text-center flex flex-col items-center gap-1">
+          <p className="text-[11px] font-semibold text-[#4a5568] dark:text-[#8b949e]">
+            Didn't receive the code?
+          </p>
+          <button
+            onClick={handleResendOtp}
+            disabled={resendLoading || otpCooldown > 0}
+            className="text-[12px] font-bold text-emerald-500 dark:text-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-300 hover:underline transition-colors disabled:text-[#a0aec0] dark:disabled:text-[#4b5563] disabled:cursor-not-allowed disabled:no-underline"
+          >
+            {otpCooldown > 0
+              ? `Resend in ${otpCooldown}s`
+              : resendLoading
+                ? "Resending..."
+                : "Resend OTP"}
+          </button>
+        </div>
       </div>
 
-      {/* Back to Login Link */}
-      <p className="text-center text-xs text-[#64748b] dark:text-[#94a3b8] mt-6 font-semibold">
-        Remember your password?{" "}
-        <Link
-          href="/login"
-          className="text-[#3b5998] dark:text-[#7dd3fc] font-bold hover:underline transition-colors ml-1"
-        >
-          Log in here
-        </Link>
-      </p>
-
-      {/* Minimal Footer */}
-      <footer className="text-[11px] font-semibold text-[#94a3b8] dark:text-[#64748b] text-center w-full mt-8">
-        &copy; 2026 Heapify Labs. Secure & Encrypted.
+      {/* Footer Note */}
+      <footer className="text-[10px] font-semibold text-[#718096] dark:text-[#8b949e] text-center w-full mt-6">
+        This code expires in 15 minutes
       </footer>
     </div>
   );
