@@ -86,8 +86,8 @@ function CommandRow({ cmd, description }: ArticleCommand) {
   return (
     <div className="group relative rounded-2xl overflow-hidden border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#161b22] shadow-sm mb-4 hover:shadow-md hover:border-emerald-400 dark:hover:border-emerald-600 transition-all duration-300">
       
-      {/* 🟢 Top Bar (Adapts to Light/Dark Mode) */}
-      <div className="flex items-center justify-between bg-emerald-50/50 dark:bg-[#21262d] border-b border-[#d1e8d8] dark:border-[#30363d] px-4 py-2.5 transition-colors">
+      {/* 🟢 Top Bar */}
+      <div className="flex items-center justify-between bg-emerald-50/50 dark:bg-[#21262d] border-b border-[#d1e8d8] dark:border-[#30363d] px-3 md:px-4 py-2 md:py-2.5 transition-colors">
          <div className="flex items-center gap-2">
             <FiTerminal size={14} className="text-emerald-600 dark:text-emerald-400" />
             <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-300 tracking-widest uppercase">
@@ -97,9 +97,9 @@ function CommandRow({ cmd, description }: ArticleCommand) {
          <CopyButton text={cmd} />
       </div>
 
-      {/* 💻 Terminal Body (Always Dark for Authentic Feel) */}
-      <div className="p-4 bg-[#061409] dark:bg-[#040a06] overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#10b981_transparent]">
-         <div className="flex items-start font-mono text-[13px] leading-relaxed">
+      {/* 💻 Terminal Body */}
+      <div className="p-3 md:p-4 bg-[#061409] dark:bg-[#040a06] overflow-x-auto [scrollbar-width:thin] [scrollbar-color:#10b981_transparent]">
+         <div className="flex items-start font-mono text-[12px] md:text-[13px] leading-relaxed">
             <span className="text-emerald-500 mr-3 select-none flex-shrink-0 mt-[1px]">
               ➜
             </span>
@@ -109,11 +109,11 @@ function CommandRow({ cmd, description }: ArticleCommand) {
          </div>
       </div>
 
-      {/* 📝 Description Footer (Adapts to Light/Dark Mode) */}
+      {/* 📝 Description Footer */}
       {description && (
-        <div className="flex items-start gap-2.5 bg-white dark:bg-[#161b22] border-t border-[#d1e8d8] dark:border-[#30363d] px-4 py-3 transition-colors">
+        <div className="flex items-start gap-2.5 bg-white dark:bg-[#161b22] border-t border-[#d1e8d8] dark:border-[#30363d] px-3 md:px-4 py-2.5 md:py-3 transition-colors">
            <FiInfo size={14} className="text-emerald-500 dark:text-emerald-600 mt-0.5 shrink-0" />
-           <p className="text-[12px] text-[#4a5568] dark:text-[#8b949e] font-medium leading-5">
+           <p className="text-[11px] md:text-[12px] text-[#4a5568] dark:text-[#8b949e] font-medium leading-5">
              {description}
            </p>
         </div>
@@ -126,11 +126,11 @@ function CommandRow({ cmd, description }: ArticleCommand) {
 function ExampleBlock({ code }: { code: string }) {
   return (
     <div className="rounded-xl overflow-hidden border border-[#30363d] shadow-sm my-4">
-      <div className="flex items-center justify-between bg-[#161b22] border-b border-[#30363d] px-4 py-2.5">
+      <div className="flex items-center justify-between bg-[#161b22] border-b border-[#30363d] px-3 md:px-4 py-2 md:py-2.5">
         <span className="text-[10px] font-bold text-[#7d8590] uppercase tracking-widest">example</span>
         <CopyButton text={code} />
       </div>
-      <pre className="bg-[#0d1117] px-5 py-4 overflow-x-auto text-[12.5px] font-mono text-[#e6edf3] leading-relaxed [scrollbar-width:thin] [scrollbar-color:#21262d_transparent] whitespace-pre">
+      <pre className="bg-[#0d1117] px-4 py-3 md:px-5 md:py-4 overflow-x-auto text-[11.5px] md:text-[12.5px] font-mono text-[#e6edf3] leading-relaxed [scrollbar-width:thin] [scrollbar-color:#21262d_transparent] whitespace-pre">
         <code>{code}</code>
       </pre>
     </div>
@@ -155,9 +155,9 @@ function ArticleContent({ content }: { content: string }) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 md:space-y-8">
       {parsed.introduction && (
-        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-2xl px-6 py-5">
+        <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-xl md:rounded-r-2xl px-4 py-4 md:px-6 md:py-5">
           <p className="text-sm text-[#2d4a3a] dark:text-[#a8c8b8] leading-7 font-medium">
             {parsed.introduction}
           </p>
@@ -165,7 +165,7 @@ function ArticleContent({ content }: { content: string }) {
       )}
       {parsed.sections?.map((section, idx) => (
         <section key={idx} className="space-y-3">
-          <div className="flex items-center gap-2.5 mb-3">
+          <div className="flex items-center gap-2.5 mb-2 md:mb-3">
             <span className="w-1 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
             <h2 className="text-base font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
               {section.heading}
@@ -219,9 +219,6 @@ const accentColors = [
   { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
   { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
   { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
-  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
-  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
-  { bg: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-800/50", hoverBorder: "hover:border-emerald-500 dark:hover:border-emerald-500" },
 ];
 
 function ChapterCard({
@@ -238,7 +235,6 @@ function ChapterCard({
   const accent = accentColors[globalIdx % accentColors.length];
   const chapterTotalTime = chapter.articles.reduce((a, art) => a + art.readTimeMinutes, 0);
 
-  // When searching: show all matching articles; otherwise preview first 3
   const displayArticles = searchQuery.trim()
     ? chapter.articles.filter((a) =>
       a.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -251,11 +247,11 @@ function ChapterCard({
 
   return (
     <div
-      className={`group bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] ${accent.hoverBorder} p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
+      className={`group bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] ${accent.hoverBorder} p-5 md:p-6 rounded-2xl md:rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1`}
     >
       {/* Card header */}
-      <div className="flex items-start justify-between mb-5">
-        <div className={`p-3.5 ${accent.bg} rounded-2xl ${accent.text}`}>
+      <div className="flex items-start justify-between mb-4 md:mb-5">
+        <div className={`p-3 md:p-3.5 ${accent.bg} rounded-xl md:rounded-2xl ${accent.text}`}>
           <FiGitBranch size={20} />
         </div>
         <span className={`text-[10px] font-bold ${accent.text} ${accent.bg} px-3 py-1 rounded-lg border ${accent.border}`}>
@@ -269,7 +265,7 @@ function ChapterCard({
       </h3>
 
       {/* Meta */}
-      <div className="flex items-center gap-3 mb-5">
+      <div className="flex items-center gap-3 mb-4 md:mb-5">
         <span className="flex items-center gap-1 text-[11px] font-medium text-[#4a5568] dark:text-[#8b949e]">
           <FiBook size={11} />
           {chapter.articles.length} {chapter.articles.length === 1 ? "article" : "articles"}
@@ -284,7 +280,7 @@ function ChapterCard({
 
       {/* Article list */}
       {displayArticles.length > 0 && (
-        <div className="space-y-1.5 mb-5">
+        <div className="space-y-1.5 mb-4 md:mb-5">
           {displayArticles.map((article, artIdx) => (
             <button
               key={article.id}
@@ -333,7 +329,6 @@ function ChaptersGrid({
   const totalArticles = chapters.reduce((acc, c) => acc + c.articles.length, 0);
   const isSearching = searchQuery.trim().length > 0;
 
-  // When searching: filter chapters that match by name OR have matching articles
   const filteredChapters = isSearching
     ? chapters.filter(
       (c) =>
@@ -348,7 +343,7 @@ function ChaptersGrid({
   const safePage = Math.min(currentPage, Math.max(totalPages, 1));
   const startIdx = (safePage - 1) * CHAPTERS_PER_PAGE;
   const pageChapters = isSearching
-    ? filteredChapters // show all matches when searching (no pagination)
+    ? filteredChapters
     : filteredChapters.slice(startIdx, startIdx + CHAPTERS_PER_PAGE);
 
   const matchCount = isSearching
@@ -365,20 +360,20 @@ function ChaptersGrid({
   return (
     <div>
       {/* Hero Header */}
-      <div className="mb-10">
-        <div className="flex items-start gap-6">
-          <div className="h-16 w-16 rounded-3xl bg-emerald-600 flex items-center justify-center shadow-md shrink-0">
-            <FiGitBranch size={28} className="text-white" />
+      <div className="mb-8 md:mb-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 md:gap-6">
+          <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl md:rounded-3xl bg-emerald-600 flex items-center justify-center shadow-md shrink-0">
+            <FiGitBranch size={24} className="text-white md:w-7 md:h-7" />
           </div>
           <div>
-            <h1 className="text-4xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
+            <h1 className="text-3xl md:text-4xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
               Git & Version Control
             </h1>
-            <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mt-3 leading-relaxed max-w-xl">
+            <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mt-2 md:mt-3 leading-relaxed max-w-xl">
               Master Git from the ground up — branching strategies, remote workflows, undoing mistakes,
               and advanced techniques used in real-world engineering teams.
             </p>
-            <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center flex-wrap gap-3 md:gap-4 mt-3">
               <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/50 px-3 py-1 rounded-lg">
                 {chapters.length} Chapters
               </span>
@@ -393,7 +388,7 @@ function ChaptersGrid({
       {/* Search result info */}
       {isSearching && (
         <div className="mb-5 flex items-center gap-2">
-          <FiSearch size={13} className="text-emerald-600 dark:text-emerald-400" />
+          <FiSearch size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
           <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
             {filteredChapters.length === 0 ? (
               <>No chapters matched <span className="font-bold text-[#1a202c] dark:text-[#f0f6fc]">&quot;{searchQuery}&quot;</span></>
@@ -401,7 +396,7 @@ function ChaptersGrid({
               <>
                 <span className="font-bold text-[#1a202c] dark:text-[#f0f6fc]">{filteredChapters.length}</span> chapter{filteredChapters.length !== 1 ? "s" : ""} ·{" "}
                 <span className="font-bold text-[#1a202c] dark:text-[#f0f6fc]">{matchCount}</span> article{matchCount !== 1 ? "s" : ""} matched{" "}
-                <span className="font-bold text-emerald-600 dark:text-emerald-400">&quot;{searchQuery}&quot;</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400 break-all">&quot;{searchQuery}&quot;</span>
               </>
             )}
           </p>
@@ -410,11 +405,11 @@ function ChaptersGrid({
 
       {/* Empty search state */}
       {isSearching && filteredChapters.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-[#f0f3f6] dark:bg-[#21262d] flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center py-12 md:py-20 gap-4">
+          <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#f0f3f6] dark:bg-[#21262d] flex items-center justify-center">
             <FiSearch size={24} className="text-[#a0aec0] dark:text-[#64748b]" />
           </div>
-          <div className="text-center">
+          <div className="text-center px-4">
             <p className="text-base font-bold text-[#1a202c] dark:text-[#f0f6fc] mb-1">No results found</p>
             <p className="text-sm text-[#4a5568] dark:text-[#8b949e]">Try a different search term</p>
           </div>
@@ -422,7 +417,7 @@ function ChaptersGrid({
       ) : (
         <>
           {/* Chapter Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-8">
             {pageChapters.map((chapter, idx) => {
               const globalIdx = isSearching ? chapters.indexOf(chapter) : startIdx + idx;
               return (
@@ -437,27 +432,27 @@ function ChaptersGrid({
             })}
           </div>
 
-          {/* Pagination — only shown when NOT searching */}
+          {/* Pagination */}
           {!isSearching && totalPages > 1 && (
             <>
-              <div className="flex items-center justify-center gap-2 mt-6">
+              <div className="flex flex-wrap items-center justify-center gap-2 mt-6">
                 <button
                   onClick={() => onPageChange(safePage - 1)}
                   disabled={safePage === 1}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#d1e8d8] dark:disabled:hover:border-[#30363d] disabled:hover:text-[#4a5568] dark:disabled:hover:text-[#8b949e]"
+                  className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl text-[12px] font-bold border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <FiChevronLeft size={14} />
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </button>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap justify-center">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                     <button
                       key={page}
                       onClick={() => onPageChange(page)}
-                      className={`w-9 h-9 rounded-xl text-[12px] font-bold transition-all ${page === safePage
+                      className={`w-8 h-8 md:w-9 md:h-9 rounded-xl text-[12px] font-bold transition-all ${page === safePage
                           ? "bg-emerald-600 text-white shadow-sm"
-                          : "bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400"
+                          : "bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 hover:text-emerald-600"
                         }`}
                     >
                       {page}
@@ -468,9 +463,9 @@ function ChaptersGrid({
                 <button
                   onClick={() => onPageChange(safePage + 1)}
                   disabled={safePage === totalPages}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-bold border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-[#d1e8d8] dark:disabled:hover:border-[#30363d] disabled:hover:text-[#4a5568] dark:disabled:hover:text-[#8b949e]"
+                  className="flex items-center gap-1.5 px-3 md:px-4 py-2 rounded-xl text-[12px] font-bold border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
                   <FiChevronRight size={14} />
                 </button>
               </div>
@@ -519,7 +514,7 @@ function ArticlePanel({
   return (
     <div>
       {/* Article header */}
-      <div className="mb-6 p-6 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm">
+      <div className="mb-5 md:mb-6 p-5 md:p-6 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl md:rounded-3xl shadow-sm">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-[11px] text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4 font-bold"
@@ -531,7 +526,7 @@ function ArticlePanel({
         <p className="text-[10px] text-[#a0aec0] dark:text-[#64748b] uppercase font-bold tracking-[0.15em] mb-1">
           {article.chapterName}
         </p>
-        <h1 className="text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] mb-3 leading-tight tracking-tight">
+        <h1 className="text-xl md:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] mb-3 leading-tight tracking-tight">
           {article.title}
         </h1>
         <div className="flex items-center gap-3 flex-wrap">
@@ -560,12 +555,12 @@ function ArticlePanel({
       </div>
 
       {/* Article body */}
-      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm px-8 py-8 mb-6">
+      <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl md:rounded-3xl shadow-sm px-5 py-6 md:px-8 md:py-8 mb-6">
         <ArticleContent content={article.content} />
       </div>
 
       {/* Prev / Next */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 mb-4">
         {prevItem ? (
           <button
             onClick={() => onArticleClick(prevItem.stub)}
@@ -578,9 +573,9 @@ function ArticlePanel({
             <div className="text-sm font-bold text-[#2d3748] dark:text-[#e2e8f0] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
               {prevItem.stub.title}
             </div>
-            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5">{prevItem.chapterName}</div>
+            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5 truncate">{prevItem.chapterName}</div>
           </button>
-        ) : <div />}
+        ) : <div className="hidden sm:block" />}
         {nextItem ? (
           <button
             onClick={() => onArticleClick(nextItem.stub)}
@@ -593,9 +588,9 @@ function ArticlePanel({
             <div className="text-sm font-bold text-[#2d3748] dark:text-[#e2e8f0] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
               {nextItem.stub.title}
             </div>
-            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5">{nextItem.chapterName}</div>
+            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5 truncate">{nextItem.chapterName}</div>
           </button>
-        ) : <div />}
+        ) : <div className="hidden sm:block" />}
       </div>
     </div>
   );
@@ -624,7 +619,6 @@ export default function GitPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sync page + search from URL on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -635,14 +629,12 @@ export default function GitPage() {
     setSearchQuery(q);
   }, []);
 
-  // Debounced search — update query & URL after DEBOUNCE_MS idle time
   const handleSearchChange = useCallback(
     (value: string) => {
       setSearchInput(value);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         setSearchQuery(value);
-        // Also reset page to 1 when search changes
         setCurrentPage(1);
         const params = new URLSearchParams(
           typeof window !== "undefined" ? window.location.search : ""
@@ -670,7 +662,6 @@ export default function GitPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, pathname]);
 
-  // Cleanup debounce on unmount
   useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
   const articleCacheRef = useRef<Map<number, TheoryArticle>>(new Map());
@@ -742,7 +733,6 @@ export default function GitPage() {
 
   const totalArticles = chapters.reduce((acc, c) => acc + c.articles.length, 0);
 
-  // ── Loading ──
   if (isChaptersLoading) {
     return (
       <div className="min-h-[calc(100vh-56px)] bg-[#f4fcf7] dark:bg-[#0d1117]">
@@ -751,11 +741,10 @@ export default function GitPage() {
     );
   }
 
-  // ── Error ──
   if (chaptersError) {
     return (
-      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#f4fcf7] dark:bg-[#0d1117]">
-        <div className="max-w-md text-center bg-white dark:bg-[#161b22] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm">
+      <div className="flex h-[calc(100vh-56px)] items-center justify-center bg-[#f4fcf7] dark:bg-[#0d1117] p-4">
+        <div className="w-full max-w-md text-center bg-white dark:bg-[#161b22] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-6 md:p-8 shadow-sm">
           <FiAlertCircle size={36} className="text-rose-500 dark:text-rose-400 mx-auto mb-4" />
           <h2 className="font-bold text-xl text-[#1a202c] dark:text-[#f0f6fc] mb-2">Could not load data</h2>
           <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mb-6">{chaptersError}</p>
@@ -770,40 +759,49 @@ export default function GitPage() {
     );
   }
 
-  // ── Main Render ──
   return (
     <div className="min-h-[calc(100vh-56px)] bg-[#f4fcf7] dark:bg-[#0d1117] text-[#2d3748] dark:text-[#e2e8f0] font-sans transition-colors duration-300">
 
       {/* Sticky top bar */}
-      <header className="sticky top-0 z-20 bg-[#f4fcf7]/90 dark:bg-[#0d1117]/90 backdrop-blur-sm border-b border-[#d1e8d8] dark:border-[#30363d] px-6 py-3 transition-colors duration-300">
-        <div className="max-w-5xl mx-auto flex items-center gap-4">
+      <header className="sticky top-0 z-20 bg-[#f4fcf7]/90 dark:bg-[#0d1117]/90 backdrop-blur-sm border-b border-[#d1e8d8] dark:border-[#30363d] px-4 md:px-6 py-3 transition-colors duration-300">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
 
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-xs text-[#64748b] dark:text-[#8b949e] font-medium shrink-0">
-            <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Dashboard
-            </Link>
-            <span>/</span>
-            {view === "article" ? (
-              <button onClick={handleChaptersClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                Git
-              </button>
-            ) : (
-              <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold">Git</span>
-            )}
-            {view === "article" && activeArticle && (
-              <>
-                <span>/</span>
-                <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold truncate max-w-[200px]">
-                  {activeArticle.title}
-                </span>
-              </>
-            )}
+          {/* Top row on mobile: Breadcrumb + Stats */}
+          <div className="flex items-center justify-between w-full md:w-auto gap-4">
+            <div className="flex items-center gap-1.5 text-xs text-[#64748b] dark:text-[#8b949e] font-medium shrink-0">
+              <Link href="/dashboard" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                Dashboard
+              </Link>
+              <span>/</span>
+              {view === "article" ? (
+                <button onClick={handleChaptersClick} className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                  Git
+                </button>
+              ) : (
+                <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold">Git</span>
+              )}
+              {view === "article" && activeArticle && (
+                <>
+                  <span>/</span>
+                  <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold truncate max-w-[120px] md:max-w-[200px]">
+                    {activeArticle.title}
+                  </span>
+                </>
+              )}
+            </div>
+
+            {/* Stats badge */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm shrink-0">
+              <FiBook className="text-emerald-600 dark:text-emerald-400" size={13} />
+              <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
+                {totalArticles} <span className="hidden sm:inline">Articles</span>
+              </span>
+            </div>
           </div>
 
-          {/* Search bar — only shown on chapters view */}
+          {/* Search bar */}
           {view === "chapters" && (
-            <div className="flex-1 relative max-w-md ml-auto">
+            <div className="w-full md:w-full md:max-w-md relative">
               <FiSearch
                 size={15}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#64748b] pointer-events-none"
@@ -825,19 +823,11 @@ export default function GitPage() {
               )}
             </div>
           )}
-
-          {/* Stats badge */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm shrink-0">
-            <FiBook className="text-emerald-600 dark:text-emerald-400" size={13} />
-            <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
-              {totalArticles} Articles
-            </span>
-          </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="max-w-5xl mx-auto px-6 py-8 md:px-8 md:py-10">
+      <main className="max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-10">
         {view === "chapters" ? (
           <ChaptersGrid
             chapters={chapters}
@@ -847,8 +837,8 @@ export default function GitPage() {
             onPageChange={handlePageChange}
           />
         ) : articleError ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center bg-white dark:bg-[#21262d] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm max-w-md">
+          <div className="flex items-center justify-center py-16 md:py-20">
+            <div className="text-center bg-white dark:bg-[#21262d] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-6 md:p-8 shadow-sm w-full max-w-md">
               <FiAlertCircle size={28} className="text-rose-500 dark:text-rose-400 mx-auto mb-3" />
               <p className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc] mb-2">Failed to load article</p>
               <p className="text-xs text-[#4a5568] dark:text-[#8b949e] mb-4">{articleError}</p>

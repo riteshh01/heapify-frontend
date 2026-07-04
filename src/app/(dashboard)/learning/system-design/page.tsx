@@ -18,6 +18,8 @@ import {
   FiX,
   FiCode,
   FiMaximize2,
+  FiMenu,
+  FiChevronDown,
 } from "react-icons/fi";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -204,10 +206,6 @@ function InlineImage({ img }: { img: ArticleImage }) {
 }
 
 // ─── SD Section ───────────────────────────────────────────────────────────────
-/**
- * Each section has a unique accent color + badge label.
- * The left border + pill badge make each heading instantly recognisable.
- */
 type SdSectionVariant =
   | "analogy"
   | "architecture"
@@ -259,13 +257,8 @@ const SD_SECTION_STYLES: Record<
 };
 
 // ─── Inline Markdown renderer ────────────────────────────────────────────────
-/**
- * Renders inline markdown: **bold**, *italic*, `code`, and plain text.
- * Returns an array of React nodes so it can be embedded in any block element.
- */
 function renderInline(text: string): React.ReactNode[] {
   const nodes: React.ReactNode[] = [];
-  // Pattern: **bold** | *italic* | `code`
   const pattern = /(\*\*(.+?)\*\*|\*(.+?)\*|`([^`]+)`)/g;
   let last = 0;
   let match: RegExpExecArray | null;
@@ -274,21 +267,18 @@ function renderInline(text: string): React.ReactNode[] {
       nodes.push(text.slice(last, match.index));
     }
     if (match[2] !== undefined) {
-      // **bold**
       nodes.push(
         <strong key={match.index} className="font-bold text-[#111827] dark:text-[#f0f6fc]">
           {match[2]}
         </strong>
       );
     } else if (match[3] !== undefined) {
-      // *italic*
       nodes.push(
         <em key={match.index} className="italic text-[#374151] dark:text-[#c9d1d9]">
           {match[3]}
         </em>
       );
     } else if (match[4] !== undefined) {
-      // `inline code`
       nodes.push(
         <code
           key={match.index}
@@ -305,18 +295,6 @@ function renderInline(text: string): React.ReactNode[] {
 }
 
 // ─── Block Markdown renderer ──────────────────────────────────────────────────
-/**
- * Full markdown-to-JSX renderer.
- * Supports:
- *  - Fenced code blocks (``` ... ```)
- *  - ATX headings  # ## ### ####
- *  - Blockquotes   > …
- *  - Unordered lists  - / * / •
- *  - Ordered lists    1. 2. …
- *  - Horizontal rules ---
- *  - Paragraph groups (blank-line separated)
- *  - Inline markdown within all block types
- */
 function MarkdownBody({ text, className }: { text: string; className?: string }) {
   const lines = text.split("\n");
   const blocks: React.ReactNode[] = [];
@@ -445,11 +423,9 @@ function MarkdownBody({ text, className }: { text: string; className?: string })
     // ── Ordered list ──────────────────────────────────────────────────────────
     if (/^\d+\.\s+/.test(raw)) {
       const items: string[] = [];
-      let num = 1;
       while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
         items.push(lines[i].replace(/^\d+\.\s+/, ""));
         i++;
-        num++;
       }
       blocks.push(
         <ol key={nextKey()} className="my-4 space-y-2 pl-1">
@@ -513,7 +489,6 @@ function SdSection({
   const { border, badge, label } = SD_SECTION_STYLES[variant];
   return (
     <div className="mb-9">
-      {/* Heading row */}
       <div className={`flex items-center gap-3 mb-4 pl-4 border-l-[3.5px] ${border}`}>
         <h2 className="text-[19px] font-bold text-[#111827] dark:text-[#f0f6fc] leading-snug tracking-tight">
           {label}
@@ -522,7 +497,6 @@ function SdSection({
           {label}
         </span>
       </div>
-      {/* Body — use full markdown renderer so bullets/lists inside sections work */}
       <MarkdownBody text={body} />
     </div>
   );
@@ -532,14 +506,12 @@ function SdSection({
 function SdTopicContent({ topic, images }: { topic: SdTopicJson; images?: ArticleImage[] }) {
   const introText = topic.what_it_is_and_how_it_works ?? "";
 
-  // Split intro at the first sentence to make a blue callout
   const firstDot = introText.search(/[.!?](?:\s|$)/);
   const callout  = firstDot !== -1 ? introText.slice(0, firstDot + 1).trim() : introText;
   const rest     = firstDot !== -1 ? introText.slice(firstDot + 1).trim()    : "";
 
   return (
     <div>
-      {/* Intro: blue callout + full markdown body for the rest */}
       {introText && (
         <div className="mb-9">
           {callout && (
@@ -556,7 +528,6 @@ function SdTopicContent({ topic, images }: { topic: SdTopicJson; images?: Articl
         </div>
       )}
 
-      {/* Images — after intro, before sections */}
       {images && images.length > 0 && images.map((img) => (
         <InlineImage key={img.id} img={img} />
       ))}
@@ -616,61 +587,182 @@ function parseSdMarkdown(text: string): SdTopicJson | null {
   return Object.keys(topic).length > 0 ? topic : null;
 }
 
+// ─── Dynamic JSON Renderer (New Format) ───────────────────────────────────────
+function formatKey(key: string) {
+  return key
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function DynamicJsonRenderer({ data, images }: { data: any; images?: ArticleImage[] }) {
+  if (!data) return null;
+
+  const renderContent = (content: any, level: number = 2): React.ReactNode => {
+    if (!content) return null;
+
+    if (typeof content === "string") {
+      return <MarkdownBody text={content} />;
+    }
+
+    if (Array.isArray(content)) {
+      if (typeof content[0] === "string") {
+        return (
+          <ul className="my-4 space-y-2 pl-1">
+            {content.map((item, idx) => (
+              <li key={idx} className="flex items-start gap-3">
+                <span className="mt-[7px] shrink-0 w-[6px] h-[6px] rounded-full bg-emerald-500 dark:bg-emerald-400" />
+                <span
+                  className="text-[15.5px] text-[#374151] dark:text-[#b0bec5] leading-[1.9] tracking-[0.013em]"
+                  style={{ wordSpacing: "0.05em" }}
+                >
+                  {renderInline(item)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      return (
+        <div className="space-y-6 my-4">
+          {content.map((item, idx) => (
+            <div
+              key={idx}
+              className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl p-5 shadow-sm"
+            >
+              {Object.entries(item).map(([k, v]) => (
+                <div key={k} className="mb-3 last:mb-0">
+                  <h4 className="text-[13px] font-bold text-[#111827] dark:text-[#f0f6fc] uppercase tracking-wider mb-1">
+                    {formatKey(k)}
+                  </h4>
+                  <div className="text-[14.5px] text-[#374151] dark:text-[#b0bec5]">
+                    {renderContent(v, level + 1)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (typeof content === "object") {
+      return (
+        <div className="space-y-5 my-4">
+          {Object.entries(content).map(([k, v]) => (
+            <div
+              key={k}
+              className="border-l-[3px] border-emerald-500 dark:border-emerald-400 pl-4 py-1"
+            >
+              <h4 className="text-[15px] font-bold text-[#111827] dark:text-[#f0f6fc] mb-2">
+                {formatKey(k)}
+              </h4>
+              <div>{renderContent(v, level + 1)}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  return (
+    <div className="space-y-8">
+      {images && images.length > 0 && images.map((img) => <InlineImage img={img} key={img.id} />)}
+
+      {data.tagline && (
+        <div className="border-l-[3px] border-blue-500 dark:border-blue-400 pl-4 mb-5">
+          <p className="text-[16px] font-bold text-blue-700 dark:text-blue-400 italic tracking-[0.013em]">
+            {data.tagline}
+          </p>
+        </div>
+      )}
+
+      {Object.entries(data).map(([key, value]) => {
+        if (["id", "name", "tagline"].includes(key)) return null;
+
+        return (
+          <section key={key} className="space-y-3">
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="w-1.5 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
+              <h2 className="text-[18px] font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
+                {formatKey(key)}
+              </h2>
+            </div>
+            {renderContent(value)}
+          </section>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Article Content ──────────────────────────────────────────────────────────
 function ArticleContent({ content, images }: { content: string; images?: ArticleImage[] }) {
   // 1. SD Markdown (### headers)
   const sdTopic = parseSdMarkdown(content);
   if (sdTopic) return <SdTopicContent topic={sdTopic} images={images} />;
 
-  // 2. Legacy JSON
+  // 2. JSON Parser
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let parsed: any = null;
-  try { parsed = JSON.parse(content); } catch { /* not JSON */ }
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    /* not JSON */
+  }
 
-  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-    const isSdJson =
-      "what_it_is_and_how_it_works" in parsed ||
-      "placement_in_architecture" in parsed ||
-      "failure_modes" in parsed;
-    if (isSdJson) return <SdTopicContent topic={parsed as SdTopicJson} images={images} />;
+  if (parsed) {
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return <DynamicJsonRenderer data={parsed[0]} images={images} />;
+    }
 
-    const legacy = parsed as LegacyArticleJson;
-    return (
-      <div className="space-y-8">
-        {legacy.introduction && (
-          <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-2xl px-6 py-5">
-            <p className="text-[13.5px] text-[#1a202c] dark:text-[#c8d3e0] leading-[1.85] font-medium">
-              {legacy.introduction}
-            </p>
-          </div>
-        )}
-        {legacy.sections?.map((section, idx) => (
-          <section key={idx} className="space-y-3">
-            <div className="flex items-center gap-2.5 mb-3">
-              <span className="w-1 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
-              <h2 className="text-base font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
-                {section.heading}
-              </h2>
-            </div>
-            {section.body && (
-              <p className="text-[13.5px] text-[#374151] dark:text-[#c9d1d9] leading-[1.85] pl-3.5">
-                {section.body}
+    if (typeof parsed === "object" && !Array.isArray(parsed)) {
+      const isSdJson =
+        "what_it_is_and_how_it_works" in parsed ||
+        "placement_in_architecture" in parsed ||
+        "failure_modes" in parsed;
+      if (isSdJson) return <SdTopicContent topic={parsed as SdTopicJson} images={images} />;
+
+      const legacy = parsed as LegacyArticleJson;
+      return (
+        <div className="space-y-8">
+          {legacy.introduction && (
+            <div className="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-emerald-500 dark:border-emerald-400 rounded-r-2xl px-6 py-5">
+              <p className="text-[13.5px] text-[#1a202c] dark:text-[#c8d3e0] leading-[1.85] font-medium">
+                {legacy.introduction}
               </p>
-            )}
-            {section.code && (
-              <div className="pl-3.5">
-                <CodeBlock code={section.code} />
+            </div>
+          )}
+          {legacy.sections?.map((section, idx) => (
+            <section key={idx} className="space-y-3">
+              <div className="flex items-center gap-2.5 mb-3">
+                <span className="w-1 h-5 rounded-full bg-emerald-500 dark:bg-emerald-400 shrink-0 inline-block" />
+                <h2 className="text-base font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">
+                  {section.heading}
+                </h2>
               </div>
-            )}
-            {section.example && (
-              <div className="pl-3.5">
-                <ExampleBlock code={section.example} />
-              </div>
-            )}
-          </section>
-        ))}
-      </div>
-    );
+              {section.body && (
+                <p className="text-[13.5px] text-[#374151] dark:text-[#c9d1d9] leading-[1.85] pl-3.5">
+                  {section.body}
+                </p>
+              )}
+              {section.code && (
+                <div className="pl-3.5">
+                  <CodeBlock code={section.code} />
+                </div>
+              )}
+              {section.example && (
+                <div className="pl-3.5">
+                  <ExampleBlock code={section.example} />
+                </div>
+              )}
+            </section>
+          ))}
+        </div>
+      );
+    }
   }
 
   // 3. Rich markdown fallback — handles auth articles with bullets, headers, etc.
@@ -703,37 +795,33 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-// ─── Chapter Card ─────────────────────────────────────────────────────────────
+// ─── Chapter Card (fully clickable) ──────────────────────────────────────────
 function ChapterCard({
   chapter,
   globalIdx,
   searchQuery,
-  onArticleClick,
+  onChapterClick,
 }: {
   chapter: TheoryChapter;
   globalIdx: number;
   searchQuery: string;
-  onArticleClick: (article: TheoryArticleStub) => void;
+  onChapterClick: (chapter: TheoryChapter) => void;
 }) {
   const chapterTotalTime = chapter.articles.reduce(
     (a, art) => a + art.readTimeMinutes,
     0
   );
-  const displayArticles = searchQuery.trim()
-    ? chapter.articles.filter((a) =>
-        a.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : chapter.articles.slice(0, 3);
-  const hiddenCount =
-    !searchQuery.trim() && chapter.articles.length > 3
-      ? chapter.articles.length - 3
-      : 0;
+  const previewArticles = chapter.articles.slice(0, 3);
+  const hiddenCount = chapter.articles.length > 3 ? chapter.articles.length - 3 : 0;
 
   return (
-    <div className="group bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] hover:border-emerald-500 dark:hover:border-emerald-500 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1">
+    <button
+      onClick={() => onChapterClick(chapter)}
+      className="group w-full text-left bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] hover:border-emerald-500 dark:hover:border-emerald-500 p-6 rounded-3xl shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+    >
       {/* Card header */}
       <div className="flex items-start justify-between mb-5">
-        <div className="p-3.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600 dark:text-emerald-400">
+        <div className="p-3.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
           <FiLayers size={20} />
         </div>
         <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
@@ -761,14 +849,13 @@ function ChapterCard({
         )}
       </div>
 
-      {/* Article list */}
-      {displayArticles.length > 0 && (
+      {/* Article previews (non-interactive hints) */}
+      {previewArticles.length > 0 && (
         <div className="space-y-1.5 mb-5">
-          {displayArticles.map((article, artIdx) => (
-            <button
+          {previewArticles.map((article, artIdx) => (
+            <div
               key={article.id}
-              onClick={() => onArticleClick(article)}
-              className="w-full flex items-center gap-2 text-left text-[12px] text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors py-0.5"
+              className="flex items-center gap-2 text-[12px] text-[#4a5568] dark:text-[#8b949e] py-0.5"
             >
               <span className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] w-4 shrink-0 text-right">
                 {String(artIdx + 1).padStart(2, "0")}
@@ -779,7 +866,7 @@ function ChapterCard({
               <span className="truncate font-medium">
                 <Highlight text={article.title} query={searchQuery} />
               </span>
-            </button>
+            </div>
           ))}
           {hiddenCount > 0 && (
             <p className="text-[11px] text-[#a0aec0] dark:text-[#64748b] pl-6 font-medium">
@@ -797,7 +884,7 @@ function ChapterCard({
           className="group-hover:translate-x-1 transition-transform"
         />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -806,13 +893,13 @@ function ChaptersGrid({
   chapters,
   currentPage,
   searchQuery,
-  onArticleClick,
+  onChapterClick,
   onPageChange,
 }: {
   chapters: TheoryChapter[];
   currentPage: number;
   searchQuery: string;
-  onArticleClick: (article: TheoryArticleStub) => void;
+  onChapterClick: (chapter: TheoryChapter) => void;
   onPageChange: (page: number) => void;
 }) {
   const totalArticles = chapters.reduce((acc, c) => acc + c.articles.length, 0);
@@ -935,7 +1022,7 @@ function ChaptersGrid({
                   chapter={chapter}
                   globalIdx={globalIdx}
                   searchQuery={searchQuery}
-                  onArticleClick={onArticleClick}
+                  onChapterClick={onChapterClick}
                 />
               );
             })}
@@ -993,46 +1080,213 @@ function ChaptersGrid({
   );
 }
 
-// ─── Article Reader Panel ─────────────────────────────────────────────────────
-function ArticlePanel({
+// ─── Chapter Sidebar ─────────────────────────────────────────────────────────
+function ChapterSidebar({
+  chapter,
+  isSidebarOpen,
+  activeArticleId,
+  onArticleClick,
+  onToggleSidebar,
+}: {
+  chapter: TheoryChapter;
+  isSidebarOpen: boolean;
+  activeArticleId: number | null;
+  onArticleClick: (article: TheoryArticleStub) => void;
+  onToggleSidebar: () => void;
+}) {
+  const chapterTotalTime = chapter.articles.reduce(
+    (a, art) => a + art.readTimeMinutes,
+    0
+  );
+
+  return (
+    <div
+      className={`transition-all duration-300 flex overflow-hidden shrink-0 ${
+        isSidebarOpen ? "w-[18.5rem]" : "w-0"
+      }`}
+    >
+      <aside className="w-72 flex flex-col bg-white dark:bg-[#161b22] my-2 ml-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm overflow-hidden transition-colors duration-300">
+        {/* Header */}
+        <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[#d1e8d8] dark:border-[#30363d]">
+          <div className="text-emerald-600 dark:text-emerald-400 p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-md shrink-0">
+            <FiLayers size={13} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-[0.12em] mb-0.5">
+              Chapter
+            </p>
+            <span className="text-[13px] font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight truncate block">
+              {chapter.name}
+            </span>
+          </div>
+        </div>
+
+        {/* Stats strip */}
+        <div className="flex items-center gap-3 px-5 py-2.5 bg-[#f4fcf7] dark:bg-[#0d1117] border-b border-[#d1e8d8] dark:border-[#30363d]">
+          <span className="flex items-center gap-1 text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
+            <FiBook size={10} />
+            {chapter.articles.length} articles
+          </span>
+          {chapterTotalTime > 0 && (
+            <span className="flex items-center gap-1 text-[10.5px] font-bold text-[#4a5568] dark:text-[#8b949e]">
+              <FiClock size={10} />
+              {chapterTotalTime}m total
+            </span>
+          )}
+        </div>
+
+        {/* Articles list */}
+        <nav className="flex-1 overflow-y-auto py-3 [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]">
+          <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-[0.15em] px-5 py-2 mb-1">
+            Articles
+          </div>
+          <div className="space-y-0.5 px-3">
+            {chapter.articles.map((article, idx) => {
+              const isActive = activeArticleId === article.id;
+              return (
+                <button
+                  key={article.id}
+                  onClick={() => onArticleClick(article)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all ${
+                    isActive
+                      ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-r-[3px] border-emerald-500 dark:border-emerald-500"
+                      : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
+                  }`}
+                >
+                  <span
+                    className={`text-[10px] font-bold shrink-0 w-5 text-right ${
+                      isActive
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : "text-[#a0aec0] dark:text-[#64748b]"
+                    }`}
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  {article.isPremium && (
+                    <FiLock
+                      size={9}
+                      className={`shrink-0 ${
+                        isActive ? "text-amber-500" : "text-amber-400 dark:text-amber-600"
+                      }`}
+                    />
+                  )}
+                  <span
+                    className={`text-[12.5px] leading-snug truncate ${
+                      isActive ? "font-bold" : "font-semibold"
+                    }`}
+                  >
+                    {article.title}
+                  </span>
+                  {article.readTimeMinutes > 0 && (
+                    <span className="text-[10px] font-medium text-[#a0aec0] dark:text-[#64748b] shrink-0 ml-auto">
+                      {article.readTimeMinutes}m
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      </aside>
+    </div>
+  );
+}
+
+// ─── Chapter Welcome Screen ───────────────────────────────────────────────────
+function ChapterWelcome({
+  chapter,
+  onArticleClick,
+}: {
+  chapter: TheoryChapter;
+  onArticleClick: (article: TheoryArticleStub) => void;
+}) {
+  const chapterTotalTime = chapter.articles.reduce(
+    (a, art) => a + art.readTimeMinutes,
+    0
+  );
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 py-12 text-center">
+      <div className="w-20 h-20 rounded-3xl bg-emerald-600 flex items-center justify-center shadow-lg mb-6">
+        <FiLayers size={36} className="text-white" />
+      </div>
+      <h2 className="text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight mb-3">
+        {chapter.name}
+      </h2>
+      <p className="text-sm font-medium text-[#4a5568] dark:text-[#8b949e] mb-6 max-w-md leading-relaxed">
+        This chapter has{" "}
+        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+          {chapter.articles.length} article{chapter.articles.length !== 1 ? "s" : ""}
+        </span>
+        {chapterTotalTime > 0 && (
+          <>
+            {" "}with an estimated read time of{" "}
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              {chapterTotalTime} minutes
+            </span>
+          </>
+        )}
+        . Select an article from the sidebar to begin reading.
+      </p>
+
+      {/* Quick-start: first 5 articles */}
+      <div className="w-full max-w-md bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl shadow-sm overflow-hidden">
+        <div className="px-5 py-3 border-b border-[#e8f5ee] dark:border-[#30363d] text-left">
+          <p className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-widest">
+            Start with
+          </p>
+        </div>
+        {chapter.articles.slice(0, 5).map((article, idx) => (
+          <button
+            key={article.id}
+            onClick={() => onArticleClick(article)}
+            className="w-full flex items-center gap-3 px-5 py-3 text-left border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0 hover:bg-[#f4fcf7] dark:hover:bg-[#30363d]/50 transition-colors group"
+          >
+            <span className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] w-5 shrink-0 text-right">
+              {String(idx + 1).padStart(2, "0")}
+            </span>
+            {article.isPremium && <FiLock size={9} className="shrink-0 text-amber-500" />}
+            <span className="text-[13px] font-semibold text-[#1a202c] dark:text-[#f0f6fc] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors flex-1 truncate">
+              {article.title}
+            </span>
+            <FiChevronRight size={12} className="text-[#a0aec0] dark:text-[#64748b] group-hover:text-emerald-500 transition-colors shrink-0" />
+          </button>
+        ))}
+      </div>
+
+      {chapter.articles.length > 5 && (
+        <p className="text-[11px] text-[#a0aec0] dark:text-[#64748b] font-medium mt-3">
+          +{chapter.articles.length - 5} more in the sidebar
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ─── Article Body Panel ───────────────────────────────────────────────────────
+function ArticleBodyPanel({
   article,
   isLoading,
-  onBack,
-  allChapters,
+  chapter,
   onArticleClick,
 }: {
   article: TheoryArticle | null;
   isLoading: boolean;
-  onBack: () => void;
-  allChapters: TheoryChapter[];
+  chapter: TheoryChapter;
   onArticleClick: (article: TheoryArticleStub) => void;
 }) {
   if (isLoading) return <ArticleLoader />;
   if (!article) return null;
 
-  const allArticles: { stub: TheoryArticleStub; chapterName: string }[] = [];
-  for (const chapter of allChapters) {
-    for (const stub of chapter.articles) {
-      allArticles.push({ stub, chapterName: chapter.name });
-    }
-  }
-  const currentIdx = allArticles.findIndex((a) => a.stub.id === article.id);
-  const prevItem = currentIdx > 0 ? allArticles[currentIdx - 1] : null;
-  const nextItem =
-    currentIdx < allArticles.length - 1 ? allArticles[currentIdx + 1] : null;
+  const articles = chapter.articles;
+  const currentIdx = articles.findIndex((a) => a.id === article.id);
+  const prevItem = currentIdx > 0 ? articles[currentIdx - 1] : null;
+  const nextItem = currentIdx < articles.length - 1 ? articles[currentIdx + 1] : null;
 
   return (
     <div>
       {/* Article header */}
       <div className="mb-6 p-6 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-3xl shadow-sm">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-[11px] text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors mb-4 font-bold"
-        >
-          <FiArrowLeft size={11} />
-          Back to chapters
-        </button>
-
         <p className="text-[10px] text-[#a0aec0] dark:text-[#64748b] uppercase font-bold tracking-[0.15em] mb-1">
           {article.chapterName}
         </p>
@@ -1069,11 +1323,11 @@ function ArticlePanel({
         <ArticleContent content={article.content} images={article.images ?? []} />
       </div>
 
-      {/* Prev / Next */}
+      {/* Prev / Next — within chapter */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         {prevItem ? (
           <button
-            onClick={() => onArticleClick(prevItem.stub)}
+            onClick={() => onArticleClick(prevItem)}
             className="group text-left bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl p-4 hover:border-emerald-400 dark:hover:border-emerald-600 transition-all hover:shadow-sm"
           >
             <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1 flex items-center gap-1">
@@ -1081,10 +1335,7 @@ function ArticlePanel({
               Previous
             </div>
             <div className="text-sm font-bold text-[#2d3748] dark:text-[#e2e8f0] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
-              {prevItem.stub.title}
-            </div>
-            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5">
-              {prevItem.chapterName}
+              {prevItem.title}
             </div>
           </button>
         ) : (
@@ -1092,7 +1343,7 @@ function ArticlePanel({
         )}
         {nextItem ? (
           <button
-            onClick={() => onArticleClick(nextItem.stub)}
+            onClick={() => onArticleClick(nextItem)}
             className="group text-right bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl p-4 hover:border-emerald-400 dark:hover:border-emerald-600 transition-all hover:shadow-sm"
           >
             <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1 flex items-center gap-1 justify-end">
@@ -1100,16 +1351,149 @@ function ArticlePanel({
               <FiChevronRight size={9} />
             </div>
             <div className="text-sm font-bold text-[#2d3748] dark:text-[#e2e8f0] group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors truncate">
-              {nextItem.stub.title}
-            </div>
-            <div className="text-[10px] text-[#a0aec0] dark:text-[#64748b] mt-0.5">
-              {nextItem.chapterName}
+              {nextItem.title}
             </div>
           </button>
         ) : (
           <div />
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Chapter Reader Layout ────────────────────────────────────────────────────
+function ChapterReaderLayout({
+  chapter,
+  activeArticle,
+  activeArticleId,
+  isArticleLoading,
+  articleError,
+  onArticleClick,
+  onBack,
+}: {
+  chapter: TheoryChapter;
+  activeArticle: TheoryArticle | null;
+  activeArticleId: number | null;
+  isArticleLoading: boolean;
+  articleError: string | null;
+  onArticleClick: (article: TheoryArticleStub) => void;
+  onBack: () => void;
+}) {
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+
+  // Close sidebar on mobile when an article is selected
+  useEffect(() => {
+    if (activeArticleId && typeof window !== "undefined" && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  }, [activeArticleId]);
+
+  return (
+    <div className="flex h-[calc(100vh-56px-52px)] overflow-hidden -mx-6 -mb-8 md:-mx-8 md:-mb-10">
+      {/* Sidebar overlay on mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div
+        className={`
+          ${isSidebarOpen
+            ? "absolute inset-y-0 left-0 z-50 lg:relative lg:z-auto"
+            : "hidden lg:block"}
+          transition-all duration-300 h-full overflow-y-auto [scrollbar-width:thin]
+        `}
+      >
+        <ChapterSidebar
+          chapter={chapter}
+          isSidebarOpen={isSidebarOpen}
+          activeArticleId={activeArticleId}
+          onArticleClick={onArticleClick}
+          onToggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+        />
+      </div>
+
+      {/* Main Content */}
+      <main
+        className={`
+          flex-1 overflow-y-auto bg-[#f4fcf7] dark:bg-[#161b22] m-0 sm:m-2 rounded-none sm:rounded-2xl border-0 sm:border border-[#d1e8d8] dark:border-[#30363d] shadow-sm transition-colors duration-300 [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]
+          ${isSidebarOpen ? "hidden lg:block" : "block"}
+        `}
+      >
+        {/* Inner header */}
+        <div className="sticky top-0 z-20 bg-[#f4fcf7] dark:bg-[#161b22] border-b border-[#d1e8d8] dark:border-[#30363d] px-4 py-3 flex items-center gap-3 transition-colors duration-300">
+          <button
+            onClick={() => setSidebarOpen(!isSidebarOpen)}
+            className="p-2 bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-xl shadow-sm hover:bg-[#e8f5ee] dark:hover:bg-[#30363d] active:scale-95 transition-all duration-200"
+            title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
+          >
+            {isSidebarOpen
+              ? <FiX size={15} className="text-emerald-600 dark:text-emerald-400" />
+              : <FiMenu size={15} className="text-[#4a5568] dark:text-[#8b949e]" />
+            }
+          </button>
+
+          {/* Mini breadcrumb */}
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#64748b] dark:text-[#8b949e] min-w-0">
+            <button
+              onClick={onBack}
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors font-bold shrink-0"
+            >
+              ← All Chapters
+            </button>
+            <span className="shrink-0">/</span>
+            <span className="truncate font-bold text-[#1a202c] dark:text-[#f0f6fc]">
+              {chapter.name}
+            </span>
+            {activeArticle && (
+              <>
+                <span className="shrink-0">/</span>
+                <span className="truncate text-[#4a5568] dark:text-[#8b949e] max-w-[180px]">
+                  {activeArticle.title}
+                </span>
+              </>
+            )}
+          </div>
+
+          {/* Article count badge */}
+          <div className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm shrink-0">
+            <FiBook className="text-emerald-600 dark:text-emerald-400" size={11} />
+            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
+              {chapter.articles.length} Articles
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="px-5 py-6 md:px-8 md:py-8 max-w-4xl mx-auto">
+          {articleError ? (
+            <div className="flex items-center justify-center py-20">
+              <div className="text-center bg-white dark:bg-[#21262d] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm max-w-md">
+                <FiAlertCircle size={28} className="text-rose-500 dark:text-rose-400 mx-auto mb-3" />
+                <p className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc] mb-2">
+                  Failed to load article
+                </p>
+                <p className="text-xs text-[#4a5568] dark:text-[#8b949e]">
+                  {articleError}
+                </p>
+              </div>
+            </div>
+          ) : activeArticleId ? (
+            <ArticleBodyPanel
+              article={activeArticle}
+              isLoading={isArticleLoading}
+              chapter={chapter}
+              onArticleClick={onArticleClick}
+            />
+          ) : (
+            <ChapterWelcome chapter={chapter} onArticleClick={onArticleClick} />
+          )}
+        </div>
+      </main>
     </div>
   );
 }
@@ -1123,7 +1507,9 @@ export default function SystemDesignPage() {
   const [isChaptersLoading, setChaptersLoading] = useState(true);
   const [chaptersError, setChaptersError] = useState<string | null>(null);
 
-  const [view, setView] = useState<"chapters" | "article">("chapters");
+  // Three possible views: chapters grid, chapter reader (with sidebar), or legacy article
+  const [view, setView] = useState<"chapters" | "chapter">("chapters");
+  const [activeChapter, setActiveChapter] = useState<TheoryChapter | null>(null);
   const [activeArticleId, setActiveArticleId] = useState<number | null>(null);
   const [activeArticle, setActiveArticle] = useState<TheoryArticle | null>(null);
   const [isArticleLoading, setArticleLoading] = useState(false);
@@ -1179,7 +1565,6 @@ export default function SystemDesignPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }, [router, pathname]);
 
-  // Cleanup debounce on unmount
   useEffect(
     () => () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -1221,16 +1606,25 @@ export default function SystemDesignPage() {
     [router, pathname]
   );
 
+  const handleChapterClick = useCallback((chapter: TheoryChapter) => {
+    setView("chapter");
+    setActiveChapter(chapter);
+    setActiveArticleId(null);
+    setActiveArticle(null);
+    setArticleError(null);
+  }, []);
+
   const handleArticleClick = useCallback(
     async (article: TheoryArticleStub) => {
-      if (activeArticleId === article.id && view === "article") return;
-      setView("article");
+      if (activeArticleId === article.id) return;
       setActiveArticleId(article.id);
       setArticleError(null);
+
       if (articleCacheRef.current.has(article.id)) {
         setActiveArticle(articleCacheRef.current.get(article.id)!);
         return;
       }
+
       setActiveArticle(null);
       setArticleLoading(true);
       try {
@@ -1244,11 +1638,12 @@ export default function SystemDesignPage() {
         setArticleLoading(false);
       }
     },
-    [activeArticleId, view]
+    [activeArticleId]
   );
 
-  const handleChaptersClick = useCallback(() => {
+  const handleBackToChapters = useCallback(() => {
     setView("chapters");
+    setActiveChapter(null);
     setActiveArticleId(null);
     setActiveArticle(null);
     setArticleError(null);
@@ -1300,9 +1695,9 @@ export default function SystemDesignPage() {
               Dashboard
             </Link>
             <span>/</span>
-            {view === "article" ? (
+            {view === "chapter" ? (
               <button
-                onClick={handleChaptersClick}
+                onClick={handleBackToChapters}
                 className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
               >
                 System Design
@@ -1312,11 +1707,11 @@ export default function SystemDesignPage() {
                 System Design
               </span>
             )}
-            {view === "article" && activeArticle && (
+            {view === "chapter" && activeChapter && (
               <>
                 <span>/</span>
-                <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold truncate max-w-[200px]">
-                  {activeArticle.title}
+                <span className="text-[#1a202c] dark:text-[#f0f6fc] font-bold truncate max-w-[160px]">
+                  {activeChapter.name}
                 </span>
               </>
             )}
@@ -1348,7 +1743,7 @@ export default function SystemDesignPage() {
           )}
 
           {/* Stats badge */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm shrink-0">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 bg-emerald-100/60 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 rounded-full shadow-sm shrink-0 ml-auto">
             <FiBook className="text-emerald-600 dark:text-emerald-400" size={13} />
             <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 tracking-wide">
               {totalArticles} Articles
@@ -1358,46 +1753,29 @@ export default function SystemDesignPage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-5xl mx-auto px-6 py-8 md:px-8 md:py-10">
-        {view === "chapters" ? (
+      {view === "chapters" ? (
+        <main className="max-w-5xl mx-auto px-6 py-8 md:px-8 md:py-10">
           <ChaptersGrid
             chapters={chapters}
             currentPage={currentPage}
             searchQuery={searchQuery}
-            onArticleClick={handleArticleClick}
+            onChapterClick={handleChapterClick}
             onPageChange={handlePageChange}
           />
-        ) : articleError ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center bg-white dark:bg-[#21262d] border border-rose-200 dark:border-rose-900/50 rounded-3xl p-8 shadow-sm max-w-md">
-              <FiAlertCircle
-                size={28}
-                className="text-rose-500 dark:text-rose-400 mx-auto mb-3"
-              />
-              <p className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc] mb-2">
-                Failed to load article
-              </p>
-              <p className="text-xs text-[#4a5568] dark:text-[#8b949e] mb-4">
-                {articleError}
-              </p>
-              <button
-                onClick={handleChaptersClick}
-                className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline"
-              >
-                ← Back to chapters
-              </button>
-            </div>
-          </div>
-        ) : (
-          <ArticlePanel
-            article={activeArticle}
-            isLoading={isArticleLoading}
-            onBack={handleChaptersClick}
-            allChapters={chapters}
+        </main>
+      ) : view === "chapter" && activeChapter ? (
+        <div className="px-6 py-8 md:px-8 md:py-10">
+          <ChapterReaderLayout
+            chapter={activeChapter}
+            activeArticle={activeArticle}
+            activeArticleId={activeArticleId}
+            isArticleLoading={isArticleLoading}
+            articleError={articleError}
             onArticleClick={handleArticleClick}
+            onBack={handleBackToChapters}
           />
-        )}
-      </main>
+        </div>
+      ) : null}
     </div>
   );
 }
