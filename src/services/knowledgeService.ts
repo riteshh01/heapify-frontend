@@ -52,6 +52,7 @@ export interface ProblemTag {
   id: string | number;
   name: string;
   tag_type: "company" | "topic" | string;
+  logo_url?: string | null;
 }
 
 // ── Problem Bank types (company-seeded 3250 problems) ────────────────────────
