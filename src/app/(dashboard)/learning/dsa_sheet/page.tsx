@@ -668,7 +668,10 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {companyTags.map((tag) => (
-                    <span key={tag.id} className="px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors">
+                    <span key={tag.id} className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full text-[10px] sm:text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 hover:bg-blue-200 dark:hover:bg-blue-900/60 transition-colors">
+                      {tag.logo_url && (
+                        <img src={tag.logo_url} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain rounded-sm" />
+                      )}
                       {tag.name}
                     </span>
                   ))}
