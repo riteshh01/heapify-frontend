@@ -70,7 +70,7 @@ function DiffBadge({ d }: { d: string }) {
   );
 }
 
-// ─── Searchable Select ────────────────────────────────────────────────────────
+// ─── Searchable Select (For Difficulty, Status) ──────────────────────────────
 
 interface SearchableSelectProps {
   placeholder: string;
@@ -164,13 +164,235 @@ function SearchableSelect({
   );
 }
 
+// ─── Company Specific Select (Capsule UI) ──────────────────────────────────
+
+function CompanySelect({
+  value,
+  companies,
+  onChange,
+}: {
+  value: string;
+  companies: CompanyItem[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = q
+    ? companies.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()))
+    : companies;
+
+  const selectedCompany = companies.find((c) => c.slug === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => { setOpen(!open); setQ(""); }}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-w-[130px] ${
+          value
+            ? "border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
+            : "border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-blue-400 dark:hover:border-blue-600"
+        }`}
+      >
+        <HiOfficeBuilding size={11} className="shrink-0" />
+        <span className="truncate max-w-[110px]">
+          {selectedCompany ? selectedCompany.name : "Company"}
+        </span>
+        {value ? (
+          <FiX
+            size={12}
+            className="shrink-0 ml-auto"
+            onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
+          />
+        ) : (
+          <FiChevronDown size={12} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute -left-16 sm:-left-32 top-full mt-1.5 z-50 w-[300px] sm:w-[450px] bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-xl p-4 overflow-hidden">
+          <div className="relative mb-4">
+            <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search companies..."
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] pr-1">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-[#a0aec0] text-center py-4">No companies found.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 p-1">
+                <button
+                  onClick={() => { onChange(""); setOpen(false); setQ(""); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                    value === ""
+                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
+                      : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
+                  }`}
+                >
+                  All Companies
+                </button>
+
+                {filtered.map((c) => {
+                  const isActive = value === c.slug;
+                  return (
+                    <button
+                      key={c.slug}
+                      onClick={() => { onChange(c.slug); setOpen(false); setQ(""); }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                        isActive
+                          ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 shadow-sm"
+                          : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400"
+                      }`}
+                    >
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt="" className="w-4 h-4 object-contain rounded-sm bg-white" />
+                      ) : (
+                        <HiOfficeBuilding size={12} className="opacity-50" />
+                      )}
+                      {c.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Topic Specific Select (Capsule UI) ────────────────────────────────────
+
+function TopicSelect({
+  value,
+  tags,
+  onChange,
+}: {
+  value: string;
+  tags: TagItem[];
+  onChange: (v: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filtered = q
+    ? tags.filter((t) => t.name.toLowerCase().includes(q.toLowerCase()))
+    : tags;
+
+  const selectedTag = tags.find((t) => t.slug === value);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => { setOpen(!open); setQ(""); }}
+        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-w-[130px] ${
+          value
+            ? "border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-300"
+            : "border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-orange-400 dark:hover:border-orange-600"
+        }`}
+      >
+        <FiTag size={11} className="shrink-0" />
+        <span className="truncate max-w-[110px]">
+          {selectedTag ? selectedTag.name : "Topic"}
+        </span>
+        {value ? (
+          <FiX
+            size={12}
+            className="shrink-0 ml-auto"
+            onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
+          />
+        ) : (
+          <FiChevronDown size={12} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute -left-16 sm:-left-32 top-full mt-1.5 z-50 w-[300px] sm:w-[450px] bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-xl p-4 overflow-hidden">
+          <div className="relative mb-4">
+            <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search topics..."
+              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-orange-400 dark:focus:border-orange-500 transition-colors"
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] pr-1">
+            {filtered.length === 0 ? (
+              <p className="text-xs text-[#a0aec0] text-center py-4">No topics found.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 p-1">
+                <button
+                  onClick={() => { onChange(""); setOpen(false); setQ(""); }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
+                    value === ""
+                      ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
+                      : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
+                  }`}
+                >
+                  All Topics
+                </button>
+
+                {filtered.map((t) => {
+                  const isActive = value === t.slug;
+                  return (
+                    <button
+                      key={t.slug}
+                      onClick={() => { onChange(t.slug); setOpen(false); setQ(""); }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                        isActive
+                          ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 shadow-sm"
+                          : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:border-orange-700/50 dark:hover:text-orange-400"
+                      }`}
+                    >
+                      <FiTag size={10} className="opacity-70" />
+                      {t.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Tag Pills (collapsible) ──────────────────────────────────────────────────
 
 function TagPills({
   items,
   colorClass,
 }: {
-  items: string[];
+  items: { label: string; logoUrl?: string | null }[];
   colorClass: string;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -182,12 +404,15 @@ function TagPills({
 
   return (
     <div className="flex flex-wrap gap-1 items-center">
-      {visible.map((name) => (
+      {visible.map((item) => (
         <span
-          key={name}
-          className={`text-[9px] font-semibold px-2 py-0.5 rounded-full border ${colorClass}`}
+          key={item.label}
+          className={`flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${colorClass}`}
         >
-          {name}
+          {item.logoUrl && (
+            <img src={item.logoUrl} alt="" className="w-4 h-4 object-contain rounded-sm" />
+          )}
+          {item.label}
         </span>
       ))}
       {!expanded && extra > 0 && (
@@ -250,7 +475,7 @@ function ProblemRow({ prob, globalIndex, onToggle }: ProblemRowProps) {
           rel="noopener noreferrer"
           className={`flex-1 text-sm font-semibold truncate transition-colors ${
             prob.solved
-              ? "text-[#a0aec0] dark:text-[#4b5563] line-through decoration-[#c4cdd6]"
+              ? "text-[#a0aec0] dark:text-[#4b5563] decoration-[#c4cdd6]"
               : "text-[#1a202c] dark:text-[#f0f6fc] hover:text-emerald-600 dark:hover:text-emerald-400"
           }`}
         >
@@ -324,7 +549,7 @@ function ProblemRow({ prob, globalIndex, onToggle }: ProblemRowProps) {
                 </span>
               </div>
               <TagPills
-                items={prob.topics}
+                items={prob.topics.map(t => ({ label: t }))}
                 colorClass="bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
               />
             </div>
@@ -339,7 +564,7 @@ function ProblemRow({ prob, globalIndex, onToggle }: ProblemRowProps) {
                 </span>
               </div>
               <TagPills
-                items={prob.companies}
+                items={prob.companies.map(c => ({ label: c.name, logoUrl: c.logo_url }))}
                 colorClass="bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
               />
             </div>
@@ -377,7 +602,7 @@ export default function DashboardPage() {
   // ── Stats ─────────────────────────────────────────────────────────────────
   const [solvedCount, setSolvedCount]   = useState(0);
   const [totalProblems, setTotalProblems] = useState(0);
-  const [statsLoading, setStatsLoading]  = useState(true);
+  const [isStatsLoading, setIsStatsLoading]  = useState(true);
 
   // ── Filter state ──────────────────────────────────────────────────────────
   const [search,     setSearch]     = useState("");
@@ -406,14 +631,14 @@ export default function DashboardPage() {
 
   // ── Load stats ────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!user) { setStatsLoading(false); return; }
+    if (!user) { setIsStatsLoading(false); return; }
     fetchProgressSummary()
       .then(({ summary }) => {
         setSolvedCount(summary.totalSolved);
         setTotalProblems(summary.totalProblems);
       })
       .catch(() => {})
-      .finally(() => setStatsLoading(false));
+      .finally(() => setIsStatsLoading(false));
   }, [user]);
 
   // ── Load dropdown data ────────────────────────────────────────────────────
@@ -524,18 +749,6 @@ export default function DashboardPage() {
     setSearch(""); setDifficulty(""); setCompany(""); setTag(""); setStatus("");
   };
 
-  // ── Company + tag options ─────────────────────────────────────────────────
-  const companyOptions = [
-    { label: "All Companies", value: "" },
-    ...companies.map((c) => ({ label: c.name, value: c.slug })),
-  ];
-  const tagOptions = [
-    { label: "All Topics", value: "" },
-    ...tags.map((t) => ({ label: t.name, value: t.slug })),
-  ];
-
-  const solvedPct = totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0;
-
   return (
     <div className="min-h-[calc(100vh-64px)] bg-[#f4fbf6] dark:bg-[#161b22] text-[#2d3748] dark:text-[#e2e8f0] font-sans transition-colors duration-300 pb-20">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
@@ -555,41 +768,37 @@ export default function DashboardPage() {
         </div>
 
         {/* ── Stats bar ──────────────────────────────────────────────────── */}
-        <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-sm mb-8 overflow-hidden">
-          <div className="grid grid-cols-3 divide-x divide-[#e2e8f0] dark:divide-[#30363d]">
-            {[
-              {
-                label: "Solved",
-                value: statsLoading ? "…" : String(solvedCount),
-                sub: `of ${totalProblems}`,
-                color: "text-emerald-500",
-              },
-              {
-                label: "Progress",
-                value: statsLoading ? "…" : `${solvedPct}%`,
-                sub: "completion",
-                color: "text-amber-500",
-              },
-              {
-                label: "Problems",
-                value: statsLoading ? "…" : String(total || totalProblems),
-                sub: "in bank",
-                color: "text-blue-500",
-              },
-            ].map((s) => (
-              <div key={s.label} className="p-4 sm:p-6 flex flex-col items-center justify-center text-center hover:bg-[#f8fcfa] dark:hover:bg-[#0d1117]/40 transition-colors">
-                <div className={`text-2xl sm:text-3xl font-black mb-0.5 ${s.color}`}>{s.value}</div>
-                <div className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-[#a0aec0] dark:text-[#4b5563]">{s.label}</div>
-                <div className="text-[9px] text-[#c4cdd6] dark:text-[#374151] hidden sm:block">{s.sub}</div>
+        <div className="mb-12">
+          <div className="bg-emerald-600 dark:bg-emerald-800 rounded-3xl p-6 sm:p-8 text-white shadow-md border border-emerald-500 dark:border-emerald-700">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex-1 w-full">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xl font-bold text-white">DSA Master Progress</h3>
+                  <span className="text-sm font-bold text-emerald-50 bg-emerald-700 dark:bg-emerald-900 px-3.5 py-1.5 rounded-xl border border-emerald-500 dark:border-emerald-700">
+                    {isStatsLoading ? "Loading..." : `${solvedCount} / ${totalProblems}`}
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-emerald-800/40 dark:bg-emerald-950/40 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full transition-all duration-1000 ease-out"
+                    style={{
+                      width: totalProblems > 0 ? `${Math.round((solvedCount / totalProblems) * 100)}%` : "0%",
+                    }}
+                  />
+                </div>
+                <p className="text-sm text-emerald-100 mt-3 font-medium">
+                  {solvedCount > 0
+                    ? `${totalProblems > 0 ? Math.round((solvedCount / totalProblems) * 100) : 0}% completed. You're doing great, keep up the momentum!`
+                    : "You haven't solved any problems yet. Check out the DSA Sheet to get started!"}
+                </p>
               </div>
-            ))}
-          </div>
-          {/* Progress bar */}
-          <div className="h-1 bg-[#f0f4f8] dark:bg-[#0d1117]">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-1000"
-              style={{ width: `${solvedPct}%` }}
-            />
+              <Link 
+                href="/learning/dsa_sheet" 
+                className="shrink-0 inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-emerald-700 font-bold rounded-xl hover:bg-[#eaf5ed] hover:scale-105 transition-all shadow-sm active:scale-95"
+              >
+                {solvedCount > 0 ? "Continue Learning" : "Start Learning"} <FiArrowRight size={18} />
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -653,22 +862,18 @@ export default function DashboardPage() {
                 icon={<FiCheckCircle size={11} />}
               />
 
-              {/* Company */}
-              <SearchableSelect
-                placeholder="Company"
+              {/* Company Capsule UI */}
+              <CompanySelect
                 value={company}
-                options={companyOptions}
+                companies={companies}
                 onChange={setCompany}
-                icon={<HiOfficeBuilding size={11} />}
               />
 
-              {/* Topic tag */}
-              <SearchableSelect
-                placeholder="Topic"
+              {/* Topic Capsule UI */}
+              <TopicSelect
                 value={tag}
-                options={tagOptions}
+                tags={tags}
                 onChange={setTag}
-                icon={<FiTag size={11} />}
               />
 
               {/* Clear all */}
@@ -698,12 +903,12 @@ export default function DashboardPage() {
               )}
               {company && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50">
-                  {companyOptions.find(c => c.value === company)?.label} <FiX size={9} className="cursor-pointer" onClick={() => setCompany("")} />
+                  {companies.find(c => c.slug === company)?.name} <FiX size={9} className="cursor-pointer" onClick={() => setCompany("")} />
                 </span>
               )}
               {tag && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700/50">
-                  {tagOptions.find(t => t.value === tag)?.label} <FiX size={9} className="cursor-pointer" onClick={() => setTag("")} />
+                  {tags.find(t => t.slug === tag)?.name} <FiX size={9} className="cursor-pointer" onClick={() => setTag("")} />
                 </span>
               )}
               {status && (

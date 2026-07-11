@@ -56,6 +56,11 @@ export interface ProblemTag {
 
 // ── Problem Bank types (company-seeded 3250 problems) ────────────────────────
 
+export interface BankProblemCompany {
+  name: string;
+  logo_url: string | null;
+}
+
 export interface BankProblem {
   id: number;
   title: string;
@@ -63,7 +68,7 @@ export interface BankProblem {
   problemLink: string;
   slug: string;
   solved: boolean;
-  companies: string[];   // company names already aggregated
+  companies: BankProblemCompany[];   // company names and logos already aggregated
   topics: string[];      // topic tag names already aggregated
 }
 
@@ -75,7 +80,7 @@ export interface BankProblemsResult {
   hasMore: boolean;
 }
 
-export interface CompanyItem { slug: string; name: string; }
+export interface CompanyItem { slug: string; name: string; logo_url?: string | null; }
 export interface TagItem    { slug: string; name: string; }
 
 export interface ProgressRow {
