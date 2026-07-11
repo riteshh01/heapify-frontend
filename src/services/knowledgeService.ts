@@ -54,6 +54,35 @@ export interface ProblemTag {
   tag_type: "company" | "topic" | string;
 }
 
+// ── Problem Bank types (company-seeded 3250 problems) ────────────────────────
+
+export interface BankProblemCompany {
+  name: string;
+  logo_url: string | null;
+}
+
+export interface BankProblem {
+  id: number;
+  title: string;
+  difficulty: "easy" | "medium" | "hard" | string;
+  problemLink: string;
+  slug: string;
+  solved: boolean;
+  companies: BankProblemCompany[];   // company names and logos already aggregated
+  topics: string[];      // topic tag names already aggregated
+}
+
+export interface BankProblemsResult {
+  problems: BankProblem[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export interface CompanyItem { slug: string; name: string; logo_url?: string | null; }
+export interface TagItem    { slug: string; name: string; }
+
 export interface ProgressRow {
   problem_id: string | number;
   completed: boolean;
@@ -221,4 +250,66 @@ export async function saveUserNote(problemId: string | number, note: string): Pr
 export async function fetchSolvedCount(): Promise<number> {
   const solved = await fetchProgress();
   return solved.size;
+}
+
+// ── Problem Bank API calls ────────────────────────────────────────────────────
+
+export interface BankFilters {
+  page?: number;
+  limit?: number;
+  difficulty?: string;
+  company?: string;
+  tag?: string;
+  search?: string;
+  status?: "" | "solved" | "unsolved";
+}
+
+/** GET /knowledge/all-problems — paginated company-seeded problem bank */
+export async function fetchAllProblems(filters: BankFilters = {}): Promise<BankProblemsResult> {
+  const params = new URLSearchParams();
+  if (filters.page)       params.set("page",       String(filters.page));
+  if (filters.limit)      params.set("limit",      String(filters.limit));
+  if (filters.difficulty) params.set("difficulty", filters.difficulty);
+  if (filters.company)    params.set("company",    filters.company);
+  if (filters.tag)        params.set("tag",        filters.tag);
+  if (filters.search)     params.set("search",     filters.search);
+  if (filters.status)     params.set("status",     filters.status);
+
+  const qs = params.toString();
+  const data = await get<{
+    success: boolean;
+    problems: BankProblem[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+    message?: string;
+  }>(`/knowledge/all-problems${qs ? `?${qs}` : ""}`);
+
+  if (!data.success) throw new Error(data.message || "Failed to fetch problems");
+  return {
+    problems: data.problems,
+    total:    data.total,
+    page:     data.page,
+    limit:    data.limit,
+    hasMore:  data.hasMore,
+  };
+}
+
+/** GET /knowledge/companies — all 470 companies for filter dropdown */
+export async function fetchCompaniesList(): Promise<CompanyItem[]> {
+  const data = await get<{ success: boolean; companies: CompanyItem[]; message?: string }>(
+    "/knowledge/companies"
+  );
+  if (!data.success) throw new Error(data.message || "Failed to fetch companies");
+  return data.companies;
+}
+
+/** GET /knowledge/tags-list — all topic tags for filter dropdown */
+export async function fetchTagsList(): Promise<TagItem[]> {
+  const data = await get<{ success: boolean; tags: TagItem[]; message?: string }>(
+    "/knowledge/tags-list"
+  );
+  if (!data.success) throw new Error(data.message || "Failed to fetch tags");
+  return data.tags;
 }
