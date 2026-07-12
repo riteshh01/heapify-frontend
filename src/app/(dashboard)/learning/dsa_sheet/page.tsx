@@ -37,11 +37,7 @@ import { DSALoader, DSAFullLoader } from "@/components/loading/Spinner";
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
-interface DashboardViewProps {
-  progressSummary: ProgressSummary | null;
-  totalProblemsCount: number;
-  solvedProblems: Set<string | number>;
-}
+
 
 interface PatternDetailViewProps {
   activePattern: KnowledgePattern | null;
@@ -309,11 +305,17 @@ const DSASheet: React.FC = () => {
 
         <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10">
           {view === "dashboard" ? (
-            <DashboardView
-              progressSummary={progressSummary}
-              totalProblemsCount={totalProblemsCount}
-              solvedProblems={solvedProblems}
-            />
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4">
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-emerald-200 dark:border-emerald-800/50">
+                <FiFileText className="text-emerald-600 dark:text-emerald-400" size={28} />
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight mb-3">
+                Select a Pattern
+              </h2>
+              <p className="text-sm sm:text-base font-medium text-[#4a5568] dark:text-[#8b949e] max-w-md">
+                Choose a pattern from the sidebar to start solving problems and track your progress.
+              </p>
+            </div>
           ) : (
             <PatternDetailView
               activePattern={currentPattern}
@@ -329,130 +331,7 @@ const DSASheet: React.FC = () => {
   );
 };
 
-// ─── Difficulty Arc Chart ─────────────────────────────────────────────────────
 
-function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblems }: DashboardViewProps) {
-  const summary = progressSummary;
-  const totalSolved = summary?.totalSolved ?? solvedProblems.size;
-  const totalProblems = summary?.totalProblems ?? totalProblemsCount;
-
-  const easy = summary?.byDifficulty.easy ?? { solved: 0, total: 0 };
-  const medium = summary?.byDifficulty.medium ?? { solved: 0, total: 0 };
-  const hard = summary?.byDifficulty.hard ?? { solved: 0, total: 0 };
-
-  const overallPct = totalProblems > 0 ? (totalSolved / totalProblems) : 0;
-
-  function describeArc(cx: number, cy: number, r: number, pct: number, startAngle = -210, sweepAngle = 240) {
-    const clamp = Math.min(Math.max(pct, 0), 0.9999);
-    const start = (startAngle * Math.PI) / 180;
-    const end = start + (sweepAngle * clamp * Math.PI) / 180;
-    const x1 = cx + r * Math.cos(start);
-    const y1 = cy + r * Math.sin(start);
-    const x2 = cx + r * Math.cos(end);
-    const y2 = cy + r * Math.sin(end);
-    const largeArc = sweepAngle * clamp > 180 ? 1 : 0;
-    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
-  }
-
-  function trackArc(cx: number, cy: number, r: number, startAngle = -210, sweepAngle = 240) {
-    return describeArc(cx, cy, r, 1, startAngle, sweepAngle);
-  }
-
-  const cx = 110;
-  const cy = 110;
-
-  return (
-    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14">
-      {/* SVG Arc chart */}
-      <div className="relative shrink-0 flex justify-center w-full md:w-auto">
-        <svg width={220} height={220} viewBox="0 0 220 220" className="max-w-full">
-          {/* Easy */}
-          <path d={trackArc(cx, cy, 90)} fill="none" stroke="#d1fae5" strokeWidth={10} strokeLinecap="round" className="dark:stroke-emerald-900/40" />
-          <path d={describeArc(cx, cy, 90, easy.total > 0 ? easy.solved / easy.total : 0)} fill="none" stroke="#10b981" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
-          {/* Medium */}
-          <path d={trackArc(cx, cy, 73)} fill="none" stroke="#fef3c7" strokeWidth={10} strokeLinecap="round" className="dark:stroke-amber-900/40" />
-          <path d={describeArc(cx, cy, 73, medium.total > 0 ? medium.solved / medium.total : 0)} fill="none" stroke="#f59e0b" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
-          {/* Hard */}
-          <path d={trackArc(cx, cy, 56)} fill="none" stroke="#fee2e2" strokeWidth={10} strokeLinecap="round" className="dark:stroke-rose-900/40" />
-          <path d={describeArc(cx, cy, 56, hard.total > 0 ? hard.solved / hard.total : 0)} fill="none" stroke="#ef4444" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
-
-          {/* Centre */}
-          <text x={cx} y={cy - 10} textAnchor="middle" className="fill-[#1a202c] dark:fill-[#f0f6fc]" fontSize={32} fontWeight={800} fontFamily="inherit">
-            {totalSolved}
-          </text>
-          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-[#4a5568] dark:fill-[#8b949e]" fontSize={11} fontWeight={600} fontFamily="inherit">
-            / {totalProblems}
-          </text>
-          <text x={cx} y={cy + 28} textAnchor="middle" className="fill-[#a0aec0] dark:fill-[#64748b]" fontSize={10} fontFamily="inherit" fontWeight={500}>
-            solved
-          </text>
-
-          {/* Bottom Badge */}
-          <text x={cx} y={200} textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400" fontSize={12} fontWeight={700} fontFamily="inherit">
-            {Math.round(overallPct * 100)}% complete
-          </text>
-        </svg>
-      </div>
-
-      {/* Difficulty legend + bars */}
-      <div className="flex-1 space-y-4 md:space-y-5 w-full max-w-sm">
-        {([
-          { label: "Easy", data: easy, color: "bg-emerald-500", track: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", badge: "bg-emerald-100/80 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/50" },
-          { label: "Medium", data: medium, color: "bg-amber-400", track: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", badge: "bg-amber-100/80 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/50" },
-          { label: "Hard", data: hard, color: "bg-rose-500", track: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-700 dark:text-rose-400", badge: "bg-rose-100/80 dark:bg-rose-900/40 border-rose-200 dark:border-rose-800/50" },
-        ] as const).map(({ label, data, color, track, text, badge }) => {
-          const pct = data.total > 0 ? Math.round((data.solved / data.total) * 100) : 0;
-          return (
-            <div key={label}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className={`text-[11px] font-bold uppercase tracking-wider ${text}`}>{label}</span>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${badge} ${text}`}>
-                    {data.solved} / {data.total}
-                  </span>
-                  <span className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e]">{pct}%</span>
-                </div>
-              </div>
-              <div className={`w-full h-2.5 ${track} rounded-full overflow-hidden`}>
-                <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Overall stats row */}
-        <div className="pt-4 border-t border-[#d1e8d8] dark:border-[#30363d] grid grid-cols-2 gap-2 sm:gap-3">
-          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
-            <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Solved</div>
-            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalSolved}</div>
-          </div>
-          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
-            <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Problems</div>
-            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalProblems}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Dashboard View ───────────────────────────────────────────────────────────
-
-const DashboardView: React.FC<DashboardViewProps> = (props) => (
-  <div>
-    <div className="mb-6 sm:mb-8 border-b border-[#d1e8d8] dark:border-[#30363d] pb-4 sm:pb-6">
-      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight mb-2">
-        DSA Progress Tracker
-      </h1>
-      <p className="text-xs sm:text-sm font-medium text-[#4a5568] dark:text-[#8b949e]">
-        Track your problem-solving journey across all difficulty levels.
-      </p>
-    </div>
-    <div className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl sm:rounded-3xl shadow-sm p-5 sm:p-8">
-      <DifficultyArcChart {...props} />
-    </div>
-  </div>
-);
 
 // ─── Expandable Problem Row ───────────────────────────────────────────────────
 

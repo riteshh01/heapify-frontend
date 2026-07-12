@@ -13,6 +13,7 @@ const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
 const SUBJECT_LINKS = [
+  { label: "Stats", href: "/stats" },
   { label: "DSA Sheet", href: "/learning/dsa_sheet" },
   { label: "OS", href: "/learning/os" },
   { label: "CN", href: "/learning/networks" },
