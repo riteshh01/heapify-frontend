@@ -30,8 +30,6 @@ interface Pattern {
 
 interface SidebarProps {
   isSidebarOpen: boolean;
-  view: "dashboard" | "pattern" | string;
-  handleDashboardClick: () => void;
   handleTopicClick: (topicId: string | number) => void;
   handlePatternClick: (patternId: string | number) => void;
   activeTopicId: string | number | null;
@@ -46,8 +44,6 @@ interface SidebarProps {
 
 const DSASidebar: React.FC<SidebarProps> = ({
   isSidebarOpen,
-  view,
-  handleDashboardClick,
   handleTopicClick,
   handlePatternClick,
   activeTopicId,
@@ -86,17 +82,6 @@ const DSASidebar: React.FC<SidebarProps> = ({
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {/* Dashboard Button */}
-          <button
-            onClick={handleDashboardClick}
-            className={`w-full flex items-center gap-3 px-6 py-3 text-[13px] font-bold transition-all ${view === "dashboard"
-              ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-r-4 border-emerald-500 dark:border-emerald-500"
-              : "text-[#4a5568] dark:text-[#8b949e] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d]"
-              }`}
-          >
-            <FiPieChart size={14} />
-            <span>Overview</span>
-          </button>
 
           {/* Section Label */}
           <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#4b5563] uppercase tracking-[0.15em] px-6 py-3 mt-2">

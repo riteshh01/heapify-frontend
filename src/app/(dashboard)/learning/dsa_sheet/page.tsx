@@ -53,7 +53,6 @@ type ExpandSection = "notes" | "companies" | "topic";
 
 const DSASheet: React.FC = () => {
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
-  const [view, setView] = useState<"dashboard" | "pattern">("dashboard");
   const [activeTopicId, setActiveTopicId] = useState<string | number | null>(null);
   const [expandedTopics, setExpandedTopics] = useState<Set<string | number>>(new Set());
 
@@ -158,21 +157,7 @@ const DSASheet: React.FC = () => {
     }
   };
 
-  // ── Helper to close sidebar on mobile screens ─────────────────────────────
-  const closeSidebarOnMobile = () => {
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      setSidebarOpen(false);
-    }
-  };
-
   // ── Navigation helpers ────────────────────────────────────────────────────
-  const handleDashboardClick = () => {
-    setView("dashboard");
-    setActiveTopicId(null);
-    setActivePatternId(null);
-    closeSidebarOnMobile();
-  };
-
   const handleTopicClick = async (topicId: string | number) => {
     setActiveTopicId(topicId);
     const newExpanded = new Set(expandedTopics);
@@ -190,8 +175,14 @@ const DSASheet: React.FC = () => {
     }
   };
 
+  // ── Helper to close sidebar on mobile screens ─────────────────────────────
+  const closeSidebarOnMobile = () => {
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   const handlePatternClick = async (patternId: string | number) => {
-    setView("pattern");
     setActivePatternId(patternId);
     closeSidebarOnMobile();
 
@@ -264,8 +255,6 @@ const DSASheet: React.FC = () => {
           <DSASidebar
             isSidebarOpen={isSidebarOpen}
             onClose={() => setSidebarOpen(false)}
-            view={view}
-            handleDashboardClick={handleDashboardClick}
             handleTopicClick={handleTopicClick}
             handlePatternClick={handlePatternClick}
             activeTopicId={activeTopicId}
@@ -304,7 +293,7 @@ const DSASheet: React.FC = () => {
         </header>
 
         <div className="max-w-5xl mx-auto px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10">
-          {view === "dashboard" ? (
+          {!activePatternId ? (
             <div className="flex flex-col items-center justify-center h-[50vh] text-center px-4">
               <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-6 shadow-sm border border-emerald-200 dark:border-emerald-800/50">
                 <FiFileText className="text-emerald-600 dark:text-emerald-400" size={28} />

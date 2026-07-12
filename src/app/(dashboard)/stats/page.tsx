@@ -16,6 +16,7 @@ import {
   ProgressSummary,
 } from "@/services/knowledgeService";
 import { DSALoader } from "@/components/loading/Spinner";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -30,6 +31,10 @@ interface LeetCodeStats {
   easySolved: number;
   mediumSolved: number;
   hardSolved: number;
+  totalQuestions: number;
+  easyTotal: number;
+  mediumTotal: number;
+  hardTotal: number;
   totalSubmissionNum: { difficulty: string; count: number; submissions: number }[];
   acSubmissionNum: { difficulty: string; count: number; submissions: number }[];
 }
@@ -159,6 +164,107 @@ function DifficultyArcChart({ progressSummary, totalProblemsCount, solvedProblem
   );
 }
 
+// ─── LeetCode Progress Chart ────────────────────────────────────────────────────
+
+function LeetCodeDifficultyArcChart({ stats }: { stats: LeetCodeStats }) {
+  const easy = { solved: stats.easySolved, total: stats.easyTotal || 1 };
+  const medium = { solved: stats.mediumSolved, total: stats.mediumTotal || 1 };
+  const hard = { solved: stats.hardSolved, total: stats.hardTotal || 1 };
+  const totalSolved = stats.solvedProblem;
+  const totalProblems = stats.totalQuestions || 3991;
+  const overallPct = totalProblems > 0 ? (totalSolved / totalProblems) : 0;
+
+  function describeArc(cx: number, cy: number, r: number, pct: number, startAngle = -210, sweepAngle = 240) {
+    const clamp = Math.min(Math.max(pct, 0), 0.9999);
+    const start = (startAngle * Math.PI) / 180;
+    const end = start + (sweepAngle * clamp * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(start);
+    const y1 = cy + r * Math.sin(start);
+    const x2 = cx + r * Math.cos(end);
+    const y2 = cy + r * Math.sin(end);
+    const largeArc = sweepAngle * clamp > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
+  }
+
+  function trackArc(cx: number, cy: number, r: number, startAngle = -210, sweepAngle = 240) {
+    return describeArc(cx, cy, r, 1, startAngle, sweepAngle);
+  }
+
+  const cx = 110;
+  const cy = 110;
+
+  return (
+    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14 w-full justify-center">
+      <div className="relative shrink-0 flex justify-center w-full md:w-auto">
+        <svg width={220} height={220} viewBox="0 0 220 220" className="max-w-full">
+          {/* Easy */}
+          <path d={trackArc(cx, cy, 90)} fill="none" stroke="#d1fae5" strokeWidth={10} strokeLinecap="round" className="dark:stroke-emerald-900/40" />
+          <path d={describeArc(cx, cy, 90, easy.total > 0 ? easy.solved / easy.total : 0)} fill="none" stroke="#10b981" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
+          {/* Medium */}
+          <path d={trackArc(cx, cy, 73)} fill="none" stroke="#fef3c7" strokeWidth={10} strokeLinecap="round" className="dark:stroke-amber-900/40" />
+          <path d={describeArc(cx, cy, 73, medium.total > 0 ? medium.solved / medium.total : 0)} fill="none" stroke="#f59e0b" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
+          {/* Hard */}
+          <path d={trackArc(cx, cy, 56)} fill="none" stroke="#fee2e2" strokeWidth={10} strokeLinecap="round" className="dark:stroke-rose-900/40" />
+          <path d={describeArc(cx, cy, 56, hard.total > 0 ? hard.solved / hard.total : 0)} fill="none" stroke="#ef4444" strokeWidth={10} strokeLinecap="round" className="transition-all duration-700" />
+
+          {/* Centre */}
+          <text x={cx} y={cy - 10} textAnchor="middle" className="fill-[#1a202c] dark:fill-[#f0f6fc]" fontSize={32} fontWeight={800} fontFamily="inherit">
+            {totalSolved}
+          </text>
+          <text x={cx} y={cy + 12} textAnchor="middle" className="fill-[#4a5568] dark:fill-[#8b949e]" fontSize={11} fontWeight={600} fontFamily="inherit">
+            / {totalProblems}
+          </text>
+          <text x={cx} y={cy + 28} textAnchor="middle" className="fill-[#a0aec0] dark:fill-[#64748b]" fontSize={10} fontFamily="inherit" fontWeight={500}>
+            solved
+          </text>
+
+          {/* Bottom Badge */}
+          <text x={cx} y={200} textAnchor="middle" className="fill-emerald-600 dark:fill-emerald-400" fontSize={12} fontWeight={700} fontFamily="inherit">
+            {Math.round(overallPct * 100)}% complete
+          </text>
+        </svg>
+      </div>
+
+      <div className="flex-1 space-y-4 md:space-y-5 w-full max-w-sm">
+        {([
+          { label: "Easy", data: easy, color: "bg-emerald-500", track: "bg-emerald-100 dark:bg-emerald-900/30", text: "text-emerald-700 dark:text-emerald-400", badge: "bg-emerald-100/80 dark:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800/50" },
+          { label: "Medium", data: medium, color: "bg-amber-400", track: "bg-amber-100 dark:bg-amber-900/30", text: "text-amber-700 dark:text-amber-400", badge: "bg-amber-100/80 dark:bg-amber-900/40 border-amber-200 dark:border-amber-800/50" },
+          { label: "Hard", data: hard, color: "bg-rose-500", track: "bg-rose-100 dark:bg-rose-900/30", text: "text-rose-700 dark:text-rose-400", badge: "bg-rose-100/80 dark:bg-rose-900/40 border-rose-200 dark:border-rose-800/50" },
+        ] as const).map(({ label, data, color, track, text, badge }) => {
+          const pct = data.total > 0 ? Math.round((data.solved / data.total) * 100) : 0;
+          return (
+            <div key={label}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className={`text-[11px] font-bold uppercase tracking-wider ${text}`}>{label}</span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg border ${badge} ${text}`}>
+                    {data.solved} / {data.total}
+                  </span>
+                  <span className="text-[11px] font-bold text-[#4a5568] dark:text-[#8b949e]">{pct}%</span>
+                </div>
+              </div>
+              <div className={`w-full h-2.5 ${track} rounded-full overflow-hidden`}>
+                <div className={`h-full ${color} rounded-full transition-all duration-700`} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="pt-4 border-t border-[#d1e8d8] dark:border-[#30363d] grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
+            <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Solved</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalSolved}</div>
+          </div>
+          <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-[#d1e8d8] dark:border-[#30363d]">
+            <div className="text-[10px] font-bold text-[#a0aec0] dark:text-[#64748b] uppercase tracking-wider mb-1">Total Problems</div>
+            <div className="text-xl sm:text-2xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc]">{totalProblems}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Stats Page ──────────────────────────────────────────────────────────
 
 export default function StatsPage() {
@@ -178,6 +284,8 @@ export default function StatsPage() {
   const [lcProfile, setLcProfile] = useState<LeetCodeProfile | null>(null);
   const [lcStats, setLcStats] = useState<LeetCodeStats | null>(null);
   const [lcSkills, setLcSkills] = useState<LeetCodeSkills | null>(null);
+  
+  const [activeTopicTab, setActiveTopicTab] = useState<"fundamental" | "intermediate" | "advanced">("fundamental");
 
   // Load Local Stats
   useEffect(() => {
@@ -225,26 +333,47 @@ export default function StatsPage() {
       setLcLoading(true);
       setLcError("");
       try {
-        // Fetch Profile, Stats, Skills in parallel
-        const [profileRes, statsRes, skillsRes] = await Promise.all([
-          fetch(`https://alfa-leetcode-api.onrender.com/${lcUsername}`).then(r => r.json()),
-          fetch(`https://alfa-leetcode-api.onrender.com/${lcUsername}/solved`).then(r => r.json()),
-          fetch(`https://alfa-leetcode-api.onrender.com/skillStats/${lcUsername}`).then(r => r.json()),
-        ]);
+        const res = await fetch(`/api/leetcode/stats?username=${lcUsername}`);
+        const result = await res.json();
+        
+        const matchedUser = result?.data?.matchedUser;
 
-        if (profileRes.errors || statsRes.errors) {
-          setLcError(profileRes.errors?.[0]?.message || "LeetCode user not found.");
+        if (result.errors || !matchedUser) {
+          setLcError(result.errors?.[0]?.message || "LeetCode user not found.");
           setLcProfile(null);
           setLcStats(null);
           setLcSkills(null);
         } else {
-          setLcProfile(profileRes);
-          setLcStats(statsRes);
-          setLcSkills(skillsRes?.data?.matchedUser || null);
+          setLcProfile({
+            username: matchedUser.username,
+            name: matchedUser.profile.realName,
+            avatar: matchedUser.profile.userAvatar,
+            ranking: matchedUser.profile.ranking,
+          });
+
+          const ac = matchedUser.submitStatsGlobal?.acSubmissionNum || [];
+          const allQs = result?.data?.allQuestionsCount || [];
+
+          setLcStats({
+            solvedProblem: ac.find((x: any) => x.difficulty === "All")?.count || 0,
+            easySolved: ac.find((x: any) => x.difficulty === "Easy")?.count || 0,
+            mediumSolved: ac.find((x: any) => x.difficulty === "Medium")?.count || 0,
+            hardSolved: ac.find((x: any) => x.difficulty === "Hard")?.count || 0,
+            totalQuestions: allQs.find((x: any) => x.difficulty === "All")?.count || 0,
+            easyTotal: allQs.find((x: any) => x.difficulty === "Easy")?.count || 0,
+            mediumTotal: allQs.find((x: any) => x.difficulty === "Medium")?.count || 0,
+            hardTotal: allQs.find((x: any) => x.difficulty === "Hard")?.count || 0,
+            totalSubmissionNum: [],
+            acSubmissionNum: ac,
+          });
+
+          setLcSkills({
+            tagProblemCounts: matchedUser.tagProblemCounts
+          });
         }
       } catch (err) {
         console.error("Error fetching LeetCode data", err);
-        setLcError("Failed to fetch LeetCode data. The API might be down or rate-limited.");
+        setLcError("Failed to fetch LeetCode data. Check your network or API status.");
       } finally {
         setLcLoading(false);
       }
@@ -390,72 +519,82 @@ export default function StatsPage() {
                 <button onClick={() => setIsEditingUsername(true)} className="mt-4 text-sm font-bold underline hover:text-rose-600">Change Username</button>
               </div>
             ) : lcStats ? (
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              <div className="flex flex-col gap-8">
                 
-                {/* Solved Stats Column */}
-                <div className="lg:col-span-5 flex flex-col items-center justify-center bg-slate-50 dark:bg-[#161b22] rounded-2xl p-6 border border-slate-100 dark:border-[#30363d]">
-                  <div className="text-center mb-6">
-                    <div className="text-4xl font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">{lcStats.solvedProblem}</div>
-                    <div className="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">Total Solved</div>
-                  </div>
-                  
-                  <div className="w-full space-y-4 max-w-xs">
-                    {/* Easy */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 text-xs font-bold text-emerald-500 uppercase tracking-wider text-right">Easy</div>
-                      <div className="flex-1 h-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min((lcStats.easySolved / Math.max(lcStats.solvedProblem, 1)) * 100, 100)}%` }} />
-                      </div>
-                      <div className="w-10 text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc]">{lcStats.easySolved}</div>
-                    </div>
-                    {/* Medium */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 text-xs font-bold text-amber-500 uppercase tracking-wider text-right">Medium</div>
-                      <div className="flex-1 h-3 bg-amber-100 dark:bg-amber-900/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-500 rounded-full" style={{ width: `${Math.min((lcStats.mediumSolved / Math.max(lcStats.solvedProblem, 1)) * 100, 100)}%` }} />
-                      </div>
-                      <div className="w-10 text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc]">{lcStats.mediumSolved}</div>
-                    </div>
-                    {/* Hard */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 text-xs font-bold text-rose-500 uppercase tracking-wider text-right">Hard</div>
-                      <div className="flex-1 h-3 bg-rose-100 dark:bg-rose-900/30 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full" style={{ width: `${Math.min((lcStats.hardSolved / Math.max(lcStats.solvedProblem, 1)) * 100, 100)}%` }} />
-                      </div>
-                      <div className="w-10 text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc]">{lcStats.hardSolved}</div>
-                    </div>
-                  </div>
+                {/* Solved Stats Section */}
+                <div className="w-full mx-auto flex flex-col sm:flex-row items-center justify-evenly bg-slate-50 dark:bg-[#161b22] rounded-2xl p-6 border border-slate-100 dark:border-[#30363d] gap-8">
+                  <LeetCodeDifficultyArcChart stats={lcStats} />
                 </div>
 
-                {/* Topics Graph Column */}
-                <div className="lg:col-span-7">
-                  <h3 className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc] uppercase tracking-wider mb-5 flex items-center gap-2">
-                    <FiTrendingUp className="text-amber-500" /> Topic Proficiency
-                  </h3>
+                {/* Topics Graph Section */}
+                <div className="w-full flex flex-col">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                    <h3 className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc] uppercase tracking-wider flex items-center gap-2">
+                      <FiTrendingUp className="text-amber-500" /> Topic Proficiency
+                    </h3>
+                    
+                    {/* Tabs */}
+                    {lcSkills && lcSkills.tagProblemCounts && (
+                      <div className="flex bg-[#f1f5f9] dark:bg-[#0d1117] p-1 rounded-xl border border-slate-200 dark:border-slate-800 self-start">
+                        {(["fundamental", "intermediate", "advanced"] as const).map(tab => (
+                          <button
+                            key={tab}
+                            onClick={() => setActiveTopicTab(tab)}
+                            className={`px-3 py-1.5 text-xs font-bold rounded-lg capitalize transition-all ${activeTopicTab === tab ? "bg-white dark:bg-[#21262d] text-[#1a202c] dark:text-[#f0f6fc] shadow-sm" : "text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+                          >
+                            {tab}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   
                   {lcSkills && lcSkills.tagProblemCounts ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                      
-                      {/* Fundamental & Intermediate Group */}
-                      <div>
-                        {lcSkills.tagProblemCounts.fundamental?.slice(0, 5).map(skill => 
-                          renderTopicBar(skill, lcSkills.tagProblemCounts.fundamental[0]?.problemsSolved || 1, "bg-blue-500", "bg-blue-100 dark:bg-blue-900/30")
-                        )}
+                    <div className="bg-white dark:bg-[#161b22] border border-slate-100 dark:border-[#30363d] rounded-2xl p-4 sm:p-5 shadow-sm">
+                      <div style={{ height: 380 }} className="w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={lcSkills.tagProblemCounts[activeTopicTab]}
+                            layout="horizontal"
+                            margin={{ top: 20, right: 20, left: 0, bottom: 60 }}
+                          >
+                            <YAxis 
+                              type="number"
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{ fill: 'currentColor', fontSize: 12, fontWeight: 600 }}
+                              className="text-slate-400 dark:text-slate-500"
+                            />
+                            <XAxis 
+                              dataKey="tagName" 
+                              type="category" 
+                              axisLine={false} 
+                              tickLine={false} 
+                              tick={{ fill: 'currentColor', fontSize: 11, fontWeight: 600 }}
+                              className="text-slate-600 dark:text-slate-300"
+                              angle={-45}
+                              textAnchor="end"
+                              interval={0}
+                            />
+                            <Tooltip 
+                              cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--tw-colors-slate-800, #1e293b)', color: '#fff', fontWeight: 'bold' }}
+                              itemStyle={{ color: '#fff' }}
+                            />
+                            <Bar dataKey="problemsSolved" radius={[4, 4, 0, 0]} barSize={30}>
+                              {lcSkills.tagProblemCounts[activeTopicTab]?.map((entry, index) => {
+                                const colors = {
+                                  fundamental: ['#3b82f6', '#60a5fa'],
+                                  intermediate: ['#14b8a6', '#2dd4bf'],
+                                  advanced: ['#8b5cf6', '#a78bfa']
+                                };
+                                const fill = index % 2 === 0 ? colors[activeTopicTab][0] : colors[activeTopicTab][1];
+                                return <Cell key={`cell-${index}`} fill={fill} />;
+                              })}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
-
-                      {/* Advanced Group */}
-                      <div>
-                        {lcSkills.tagProblemCounts.advanced?.slice(0, 5).map(skill => 
-                          renderTopicBar(skill, lcSkills.tagProblemCounts.advanced[0]?.problemsSolved || 1, "bg-violet-500", "bg-violet-100 dark:bg-violet-900/30")
-                        )}
-                        {/* Fallback to intermediate if advanced are few */}
-                        {(!lcSkills.tagProblemCounts.advanced || lcSkills.tagProblemCounts.advanced.length < 5) && 
-                          lcSkills.tagProblemCounts.intermediate?.slice(0, 5 - (lcSkills.tagProblemCounts.advanced?.length || 0)).map(skill => 
-                            renderTopicBar(skill, lcSkills.tagProblemCounts.intermediate[0]?.problemsSolved || 1, "bg-teal-500", "bg-teal-100 dark:bg-teal-900/30")
-                          )
-                        }
-                      </div>
-
                     </div>
                   ) : (
                     <div className="h-32 flex items-center justify-center text-[#a0aec0] dark:text-[#64748b] text-sm font-medium italic">
