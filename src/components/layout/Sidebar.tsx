@@ -14,6 +14,7 @@ import {
   FiDatabase,
   FiBookOpen,
   FiGitBranch,
+  FiX,
 } from "react-icons/fi";
 
 // --- Interfaces ---
@@ -40,6 +41,7 @@ interface SidebarProps {
   patternsCache: Map<string | number, Pattern[]>;
   subjectTitle?: string;
   subjectIcon?: React.ReactNode;
+  onClose?: () => void;
 }
 
 const DSASidebar: React.FC<SidebarProps> = ({
@@ -55,21 +57,32 @@ const DSASidebar: React.FC<SidebarProps> = ({
   patternsCache,
   subjectTitle = "DSA Sheet",
   subjectIcon = <FiBook size={14} />,
+  onClose,
 }) => {
   return (
     <div
-      className={`transition-all duration-300 flex overflow-hidden shrink-0 ${isSidebarOpen ? "w-[18.5rem]" : "w-0"
+      className={`transition-all duration-300 flex overflow-hidden shrink-0 ${isSidebarOpen ? "w-full lg:w-[18.5rem]" : "w-0"
         }`}
     >
       {/* Sidebar Container: Light mode has green tint border, Dark mode has neutral slate background/border */}
-      <aside className="w-72 flex flex-col bg-white dark:bg-[#161b22] my-2 ml-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm overflow-hidden transition-colors duration-300">
+      <aside className="w-full lg:w-72 flex flex-col bg-white dark:bg-[#161b22] my-0 lg:my-2 lg:ml-2 rounded-none lg:rounded-2xl border-0 lg:border border-[#d1e8d8] dark:border-[#30363d] shadow-sm overflow-hidden transition-colors duration-300">
 
         {/* Header */}
-        <div className="flex items-center gap-2.5 px-6 py-4 border-b border-[#d1e8d8] dark:border-[#30363d]">
-          <div className="text-emerald-600 dark:text-emerald-400 p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
-            {subjectIcon}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#d1e8d8] dark:border-[#30363d]">
+          <div className="flex items-center gap-2.5">
+            <div className="text-emerald-600 dark:text-emerald-400 p-1.5 bg-emerald-50 dark:bg-emerald-900/30 rounded-md">
+              {subjectIcon}
+            </div>
+            <span className="text-sm font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">{subjectTitle}</span>
           </div>
-          <span className="text-sm font-extrabold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight">{subjectTitle}</span>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="lg:hidden p-1.5 text-[#a0aec0] dark:text-[#64748b] hover:text-[#1a202c] dark:hover:text-[#f0f6fc] hover:bg-[#f4fcf7] dark:hover:bg-[#21262d] rounded-lg transition-colors"
+            >
+              <FiX size={18} />
+            </button>
+          )}
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

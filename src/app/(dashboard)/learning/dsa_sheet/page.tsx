@@ -264,9 +264,10 @@ const DSASheet: React.FC = () => {
         transition-all duration-300 ease-in-out h-full overflow-y-auto [scrollbar-width:thin] [scrollbar-color:#a7c7b3_transparent] dark:[scrollbar-color:#334155_transparent]
       `}>
         {/* Helper div to force inner components to take full width on mobile */}
-        <div className="w-full min-h-full [&>aside]:w-full [&>div]:w-full lg:[&>aside]:w-auto lg:[&>div]:w-auto flex flex-col">
+        <div className="w-full min-h-full flex flex-col">
           <DSASidebar
             isSidebarOpen={isSidebarOpen}
+            onClose={() => setSidebarOpen(false)}
             view={view}
             handleDashboardClick={handleDashboardClick}
             handleTopicClick={handleTopicClick}
