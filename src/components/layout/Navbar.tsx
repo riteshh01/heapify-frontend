@@ -69,7 +69,7 @@ export function Navbar() {
           authContext.setIsLoggedIn(false);
         }
         notifyFn("Logged out successfully", { type: "success" });
-        router.push("/login");
+        router.push("/");
       }
     } catch (error) {
       notifyFn("Logout failed", { type: "error" });
