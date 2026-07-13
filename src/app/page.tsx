@@ -100,20 +100,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      {/* Mild Footer */}
-      <footer className="bg-[#eaf5ed] dark:bg-[#0d1117] border-t border-[#d1e8d8] dark:border-[#30363d] py-8 mt-auto transition-colors duration-300">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm font-medium text-[#718096] dark:text-[#8b949e]">
-          <div className="flex items-center gap-2">
-            <div className="h-6 w-6 rounded bg-emerald-600 flex items-center justify-center text-white font-bold text-[10px]">H</div>
-            © 2026 Heapify Labs. Crafted for technical excellence.
-          </div>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Privacy Policy</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
