@@ -8,6 +8,7 @@ import {
   FiCheck,
   FiEdit2,
   FiAlertCircle,
+  FiTrash2,
 } from "react-icons/fi";
 import { SiLeetcode } from "react-icons/si";
 import {
@@ -313,13 +314,25 @@ export default function StatsPage() {
     loadLocalStats();
   }, []);
 
-  // Load LeetCode Username from Storage
+  // Load LeetCode Username and Cached Data from Storage
   useEffect(() => {
-    const saved = localStorage.getItem("leetcode_username");
-    if (saved) {
-      setLcUsername(saved);
-      setInputUsername(saved);
+    const savedUsername = localStorage.getItem("leetcode_username");
+    if (savedUsername) {
+      setLcUsername(savedUsername);
+      setInputUsername(savedUsername);
       setIsEditingUsername(false);
+      
+      try {
+        const cachedProfile = localStorage.getItem("leetcode_profile");
+        const cachedStats = localStorage.getItem("leetcode_stats");
+        const cachedSkills = localStorage.getItem("leetcode_skills");
+        
+        if (cachedProfile) setLcProfile(JSON.parse(cachedProfile));
+        if (cachedStats) setLcStats(JSON.parse(cachedStats));
+        if (cachedSkills) setLcSkills(JSON.parse(cachedSkills));
+      } catch (err) {
+        console.error("Failed to parse cached LeetCode data", err);
+      }
     } else {
       setIsEditingUsername(true);
     }
@@ -344,17 +357,19 @@ export default function StatsPage() {
           setLcStats(null);
           setLcSkills(null);
         } else {
-          setLcProfile({
+          const profileData = {
             username: matchedUser.username,
             name: matchedUser.profile.realName,
             avatar: matchedUser.profile.userAvatar,
             ranking: matchedUser.profile.ranking,
-          });
+          };
+          setLcProfile(profileData);
+          localStorage.setItem("leetcode_profile", JSON.stringify(profileData));
 
           const ac = matchedUser.submitStatsGlobal?.acSubmissionNum || [];
           const allQs = result?.data?.allQuestionsCount || [];
 
-          setLcStats({
+          const statsData = {
             solvedProblem: ac.find((x: any) => x.difficulty === "All")?.count || 0,
             easySolved: ac.find((x: any) => x.difficulty === "Easy")?.count || 0,
             mediumSolved: ac.find((x: any) => x.difficulty === "Medium")?.count || 0,
@@ -365,11 +380,15 @@ export default function StatsPage() {
             hardTotal: allQs.find((x: any) => x.difficulty === "Hard")?.count || 0,
             totalSubmissionNum: [],
             acSubmissionNum: ac,
-          });
+          };
+          setLcStats(statsData);
+          localStorage.setItem("leetcode_stats", JSON.stringify(statsData));
 
-          setLcSkills({
+          const skillsData = {
             tagProblemCounts: matchedUser.tagProblemCounts
-          });
+          };
+          setLcSkills(skillsData);
+          localStorage.setItem("leetcode_skills", JSON.stringify(skillsData));
         }
       } catch (err) {
         console.error("Error fetching LeetCode data", err);
@@ -389,6 +408,19 @@ export default function StatsPage() {
     setLcUsername(cleanUsername);
     localStorage.setItem("leetcode_username", cleanUsername);
     setIsEditingUsername(false);
+  };
+
+  const handleDeleteUsername = () => {
+    setLcUsername("");
+    setInputUsername("");
+    setIsEditingUsername(true);
+    setLcProfile(null);
+    setLcStats(null);
+    setLcSkills(null);
+    localStorage.removeItem("leetcode_username");
+    localStorage.removeItem("leetcode_profile");
+    localStorage.removeItem("leetcode_stats");
+    localStorage.removeItem("leetcode_skills");
   };
 
   const renderTopicBar = (skill: SkillTag, maxCount: number, colorClass: string, bgClass: string) => {
@@ -491,9 +523,14 @@ export default function StatsPage() {
                     )}
                     <span className="text-sm font-bold text-[#1a202c] dark:text-[#f0f6fc]">{lcUsername}</span>
                   </div>
-                  <button onClick={() => setIsEditingUsername(true)} className="p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 transition-colors" title="Edit username">
-                    <FiEdit2 size={14} />
-                  </button>
+                  <div className="flex items-center gap-1 border-l border-amber-200 dark:border-amber-800/50 pl-3 ml-1">
+                    <button onClick={() => setIsEditingUsername(true)} className="p-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-600 dark:text-amber-400 transition-colors" title="Edit username">
+                      <FiEdit2 size={14} />
+                    </button>
+                    <button onClick={handleDeleteUsername} className="p-1.5 rounded-lg hover:bg-rose-100 dark:hover:bg-rose-900/30 text-rose-500 dark:text-rose-400 transition-colors" title="Delete LeetCode profile">
+                      <FiTrash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -507,12 +544,12 @@ export default function StatsPage() {
                   <SiLeetcode /> Link LeetCode Account
                 </button>
               </div>
-            ) : lcLoading ? (
+            ) : lcLoading && !lcStats ? (
               <div className="py-16 flex flex-col items-center justify-center text-amber-500">
                 <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
                 <p className="text-sm font-bold tracking-wide animate-pulse">Syncing with LeetCode...</p>
               </div>
-            ) : lcError ? (
+            ) : lcError && !lcStats ? (
               <div className="py-10 flex flex-col items-center justify-center text-rose-500">
                 <FiAlertCircle size={36} className="mb-3" />
                 <p className="font-bold">{lcError}</p>
