@@ -27,7 +27,7 @@ export default function AvatarGroup() {
             src={avatar.src}
             alt={avatar.alt}
             // Tailwind classes base styling ke liye (border, shadow, etc.)
-            className={`relative w-16 h-16 rounded-full border-2 border-white object-cover bg-white shadow-md cursor-pointer ${avatar.zIndex}`}
+            className={`relative w-16 h-16 rounded-full border-2 bg-emerald-100/80 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-800/60 object-cover shadow-md cursor-pointer ${avatar.zIndex}`}
             
             // 1. Initial load par kaisa dikhega
             initial={{ opacity: 0, x: -20 }}

@@ -25,11 +25,11 @@ import AvatarGroup from "@/components/ui/AvatarGroup";
 
 const companies = [
   { name: "Google", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783747379/companies/google.png", color: "#4285F4", problems: 152 },
-  { name: "Meta", icon: "meta", color: "#0668E1", problems: 120 },
-  { name: "Microsoft", icon: "microsoft", color: "#00A4EF", problems: 115 },
-  { name: "Amazon", icon: "amazon", color: "#FF9900", problems: 140 },
-  { name: "Netflix", icon: "netflix", color: "#E50914", problems: 85 },
-  { name: "Apple", icon: "apple", color: "#000000", darkColor: "FFFFFF", problems: 90 },
+  { name: "Meta", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783746929/companies/meta.png", color: "#0668E1", problems: 120 },
+  { name: "Microsoft", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783747349/companies/microsoft.png", color: "#00A4EF", problems: 115 },
+  { name: "Amazon", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783746916/companies/amazon.png", color: "#FF9900", problems: 140 },
+  { name: "Netflix", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783747449/companies/netflix.png", color: "#E50914", problems: 85 },
+  { name: "Apple", icon: "https://res.cloudinary.com/djts2p7lb/image/upload/v1783969056/iphone_sigrs3.png", color: "#000000", darkColor: "FFFFFF", problems: 90 },
 ];
 
 const topics = [
@@ -159,8 +159,9 @@ export default function Home() {
                   className="group relative flex flex-col items-center p-8 rounded-3xl bg-[#f8fafc] dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] hover:border-blue-500/50 dark:hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
                 >
                   <div className="h-20 w-20 mb-6 flex items-center justify-center p-4 bg-white dark:bg-[#161b22] rounded-2xl group-hover:bg-blue-50 dark:group-hover:bg-[#1d2633] transition-colors border border-[#e2e8f0] dark:border-[#30363d]">
+                    {/* Yaha par humne simpleicons URL hata kar seedha company.icon lagaya hai */}
                     <img 
-                      src={`https://cdn.simpleicons.org/${company.icon}/${company.color.replace('#', '')}${company.darkColor ? `/${company.darkColor}` : ''}`} 
+                      src={company.icon}
                       alt={`${company.name} logo`}
                       className="w-full h-full object-contain drop-shadow-sm transition-transform duration-300 group-hover:scale-110"
                     />
