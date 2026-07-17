@@ -10,7 +10,7 @@ export interface User extends Timestamp {
   email: string;
   name: string;
   role: UserRole;
-  avatar?: string;
+  avatar_url?: string;
   bio?: string;
   isEmailVerified: boolean;
 }
