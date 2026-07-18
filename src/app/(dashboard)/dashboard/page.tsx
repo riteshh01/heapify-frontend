@@ -34,6 +34,7 @@ import {
   FiLoader,
 } from "react-icons/fi";
 import { HiOfficeBuilding } from "react-icons/hi";
+import quotesData from "@/data/quote.json";
 
 // ─── Utility ──────────────────────────────────────────────────────────────────
 
@@ -599,6 +600,16 @@ export default function DashboardPage() {
   const user = authContext?.user;
   const firstName = user?.name?.split(" ")?.[0] || "there";
 
+  // ── Random Quote ──────────────────────────────────────────────────────────
+  const [randomQuote, setRandomQuote] = useState<{ quote: string; author: string } | null>(null);
+
+  useEffect(() => {
+    if (quotesData && quotesData.quotes && quotesData.quotes.length > 0) {
+      const randomIndex = Math.floor(Math.random() * quotesData.quotes.length);
+      setRandomQuote(quotesData.quotes[randomIndex]);
+    }
+  }, []);
+
   // ── Stats ─────────────────────────────────────────────────────────────────
   const [solvedCount, setSolvedCount]   = useState(0);
   const [totalProblems, setTotalProblems] = useState(0);
@@ -766,6 +777,26 @@ export default function DashboardPage() {
             Browse all problems — filter by company, topic & difficulty.
           </p>
         </div>
+
+        {/* ── Quote ──────────────────────────────────────────────────────── */}
+        {randomQuote && (
+          <div className="mb-6 flex items-center justify-center px-6 py-3 bg-white dark:bg-[#21262d] rounded-full shadow-sm border border-[#e2e8f0] dark:border-[#30363d] w-fit mx-auto transition-all hover:shadow-md">
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-3 text-center sm:text-left">
+              <span className="text-[#4a5568] dark:text-[#c9d1d9] italic text-sm sm:text-base font-medium">
+                "{randomQuote.quote}"
+              </span>
+              
+              {/* Divider - sirf badi screens par dikhega */}
+              <span className="hidden sm:inline text-gray-300 dark:text-gray-600">
+                |
+              </span>
+              
+              <span className="text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm font-bold tracking-wide uppercase whitespace-nowrap">
+                {randomQuote.author}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* ── Stats bar ──────────────────────────────────────────────────── */}
         <div className="mb-12">
