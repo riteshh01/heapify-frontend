@@ -41,12 +41,10 @@ export default function ProfilePage() {
     formData.append("image", file);
 
     try {
-      const response = await fetch("/api/auth/avatar", {
+      const data = await apiCall<{ success: boolean; message?: string }>("/auth/avatar", {
         method: "POST",
         body: formData,
-        credentials: "include", // Important for passing session cookies
       });
-      const data = await response.json();
 
       if (data.success) {
         notify("Profile image updated successfully!", { type: "success" });

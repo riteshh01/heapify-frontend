@@ -73,8 +73,10 @@ export async function apiCall<T = unknown>(
 
   const url = endpoint.startsWith("http") ? endpoint : `${API_BASE_URL}${endpoint}`;
 
+  const isFormData = rest.body instanceof FormData;
+  
   const headers = new Headers({
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(customHeaders as Record<string, string>),
   });
 
