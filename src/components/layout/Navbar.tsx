@@ -152,16 +152,29 @@ export function Navbar() {
 
           {isLoggedIn ? (
             <>
-              {/* User avatar pill */}
-              <Link
-                href="/dashboard"
-                className="hidden md:flex items-center gap-2.5 text-xs font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors px-3 py-1.5 rounded-xl hover:bg-[#eaf5ed] dark:hover:bg-[#21262d]"
-              >
-                <span className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-[11px] shadow-sm">
-                  {authContext?.user?.name?.[0]?.toUpperCase() || "U"}
-                </span>
-                Dashboard
-              </Link>
+              {/* User avatar pill with Dropdown */}
+              <div className="hidden md:block relative group">
+                <button className="flex items-center gap-2.5 text-xs font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors px-3 py-1.5 rounded-xl hover:bg-[#eaf5ed] dark:hover:bg-[#21262d]">
+                  <span className="w-7 h-7 rounded-full bg-emerald-100 dark:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-bold text-[11px] shadow-sm overflow-hidden">
+                    {authContext?.user?.avatar_url ? (
+                      <img src={authContext.user.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      authContext?.user?.name?.[0]?.toUpperCase() || "U"
+                    )}
+                  </span>
+                  Dashboard
+                </button>
+                
+                {/* Dropdown Menu */}
+                <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-[#161b22] border border-[#e2e8f0] dark:border-[#30363d] rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 overflow-hidden flex flex-col py-1">
+                  <Link href="/dashboard" className="px-4 py-2.5 text-xs font-bold text-[#4a5568] dark:text-[#8b949e] hover:bg-[#eaf5ed] dark:hover:bg-[#21262d] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
+                    Overview
+                  </Link>
+                  <Link href="/profile" className="px-4 py-2.5 text-xs font-bold text-[#4a5568] dark:text-[#8b949e] hover:bg-[#eaf5ed] dark:hover:bg-[#21262d] hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors border-t border-[#e2e8f0] dark:border-[#30363d]">
+                    My Profile
+                  </Link>
+                </div>
+              </div>
 
               {/* Sign out button */}
               <button
@@ -250,6 +263,13 @@ export function Navbar() {
                   className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-[#f0f3f6] dark:hover:bg-[#21262d] transition-all"
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-[#f0f3f6] dark:hover:bg-[#21262d] transition-all"
+                >
+                  My Profile
                 </Link>
                 <button
                   onClick={() => {
