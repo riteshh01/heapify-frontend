@@ -177,7 +177,7 @@ export function DSAFullLoader() {
                    text-[#2d3748] dark:text-[#e2e8f0] overflow-hidden"
       >
         {/* ── Sidebar skeleton (matches w-[18.5rem] outer, w-72 inner aside) ── */}
-        <div className="w-[18.5rem] shrink-0">
+        <div className="hidden lg:block w-[18.5rem] shrink-0">
           <aside
             className="w-72 flex flex-col bg-white dark:bg-[#161b22]
                        my-2 ml-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d]
@@ -229,7 +229,7 @@ export function DSAFullLoader() {
         {/* ── Main content skeleton ── */}
         <main
           className="flex-1 overflow-hidden flex flex-col bg-[#f4fcf7] dark:bg-[#161b22]
-                     m-2 rounded-2xl border border-[#d1e8d8] dark:border-[#30363d] shadow-sm"
+                     m-0 sm:m-2 rounded-none sm:rounded-2xl border-0 sm:border border-[#d1e8d8] dark:border-[#30363d] shadow-sm"
         >
           {/* Sticky header: hamburger left + solved pill right */}
           <div
@@ -260,17 +260,17 @@ export function DSAFullLoader() {
                 {/* ── Arc chart skeleton (220×220) ── */}
                 <div className="shrink-0 relative">
                   {/* Outer ring */}
-                  <Bone className="h-[220px] w-[220px] rounded-full" />
+                  <Bone className="h-[180px] w-[180px] md:h-[220px] md:w-[220px] rounded-full" />
                   {/* Inner white circle to fake donut hole */}
                   <div
-                    className="absolute inset-0 m-auto h-[140px] w-[140px] rounded-full
+                    className="absolute inset-0 m-auto h-[110px] w-[110px] md:h-[140px] md:w-[140px] rounded-full
                                bg-white dark:bg-[#21262d]"
                   />
                   {/* Centre text lines */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <Bone className="h-9 w-14 rounded-lg" />
-                    <Bone className="h-3 w-12 rounded" />
-                    <Bone className="h-3 w-10 rounded" />
+                    <Bone className="h-7 w-10 md:h-9 md:w-14 rounded-lg" />
+                    <Bone className="h-2 w-10 md:h-3 md:w-12 rounded" />
+                    <Bone className="h-2 w-8 md:h-3 md:w-10 rounded" />
                   </div>
                 </div>
 
@@ -359,7 +359,7 @@ export function DSALoader() {
         {/* Problem rows table */}
         <div className="rounded-3xl border border-[#d1e8d8] dark:border-[#30363d] bg-white dark:bg-[#21262d] overflow-hidden">
           {/* Table header-ish strip */}
-          <div className="px-6 py-3 border-b border-[#d1e8d8] dark:border-[#30363d] flex items-center gap-3">
+          <div className="px-6 py-3 border-b border-[#d1e8d8] dark:border-[#30363d] hidden lg:flex items-center gap-3">
             <Bone className="h-3 w-4 rounded shrink-0" />
             <Bone className="h-3 w-5 rounded shrink-0" />
             <Bone className="h-3 w-32 rounded" />
@@ -372,23 +372,26 @@ export function DSALoader() {
           {[100, 85, 95, 75, 90, 80, 65, 88].map((titleW, i) => (
             <div
               key={i}
-              className="px-6 py-4 flex items-center gap-3
+              className="px-4 py-3 sm:px-6 sm:py-4 flex flex-col lg:flex-row lg:items-center gap-2 sm:gap-3 group
                          border-b border-[#e8f5ee] dark:border-[#30363d] last:border-b-0"
             >
-              {/* Index */}
-              <Bone className="h-3.5 w-4 rounded shrink-0" />
-              {/* Checkbox circle */}
-              <Bone className="h-5 w-5 rounded-full shrink-0" />
-              {/* Problem title — varying widths for realism */}
-              <Bone className="h-4 rounded-lg flex-1" style={{ maxWidth: `${titleW}%` }} />
-              {/* Difficulty badge */}
-              <Bone className="h-5 w-14 rounded-md shrink-0" />
-              {/* Action buttons: Notes, Companies, Topics, external link */}
-              <div className="flex items-center gap-1.5 shrink-0">
+              {/* Left Side: Index, Checkbox, Title & Difficulty */}
+              <div className="flex items-center gap-3 w-full lg:w-auto flex-1 min-w-0">
+                {/* Index */}
+                <Bone className="h-3.5 w-4 rounded shrink-0" />
+                {/* Checkbox circle */}
+                <Bone className="h-5 w-5 rounded-full shrink-0" />
+                {/* Problem title — varying widths for realism */}
+                <Bone className="h-4 rounded-lg flex-1" style={{ maxWidth: `${titleW}%` }} />
+                {/* Difficulty badge */}
+                <Bone className="h-5 w-14 rounded-md shrink-0" />
+              </div>
+              {/* Right Side: Action buttons: Notes, Companies, Topics, external link */}
+              <div className="flex items-center gap-1.5 shrink-0 pl-10 sm:pl-12 lg:pl-0 flex-wrap">
                 <Bone className="h-6 w-14 rounded-lg" />
                 <Bone className="h-6 w-20 rounded-lg" />
                 <Bone className="h-6 w-16 rounded-lg" />
-                <Bone className="h-6 w-6 rounded-lg" />
+                <Bone className="h-6 w-6 rounded-lg ml-auto lg:ml-0" />
               </div>
             </div>
           ))}
