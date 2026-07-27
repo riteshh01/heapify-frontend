@@ -117,21 +117,7 @@ export function Navbar() {
           </nav>
         )}
 
-        {/* Public nav links — when NOT logged in (Desktop) */}
-        {!isLoggedIn && (
-          <nav className="hidden md:flex items-center gap-8 text-sm font-bold text-[#4a5568] dark:text-[#8b949e]">
-            <Link href="/#features" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Features
-            </Link>
-            <Link href="/#courses" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Curriculum
-            </Link>
-            <Link href="/docs" className="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-              Docs
-            </Link>
-          </nav>
-        )}
-
+        {/* Public nav links — when NOT logged in (Desktop) - intentionally left empty */}
         {/* Right side controls */}
         <div className="flex items-center gap-3">
           {/* Theme Toggle Button */}
@@ -264,10 +250,7 @@ export function Navbar() {
             </>
           ) : (
             <div className="flex flex-col gap-2">
-              {/* Public mobile menu for non-logged-in users */}
-              <Link href="/#features" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-[#f0f3f6] dark:hover:bg-[#21262d] rounded-xl transition-colors">Features</Link>
-              <Link href="/#courses" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-[#f0f3f6] dark:hover:bg-[#21262d] rounded-xl transition-colors">Curriculum</Link>
-              <Link href="/docs" onClick={() => setMobileOpen(false)} className="px-4 py-3 text-sm font-bold text-[#4a5568] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-[#f0f3f6] dark:hover:bg-[#21262d] rounded-xl transition-colors">Docs</Link>
+              {/* Public mobile menu for non-logged-in users - intentionally left empty */}
               <div className="border-t border-[#e2e8f0] dark:border-[#30363d] pt-4 mt-2">
                 <Link href="/login" onClick={() => setMobileOpen(false)} className="flex items-center justify-center w-full text-sm font-bold bg-emerald-600 dark:bg-emerald-500 text-white px-4 py-3.5 rounded-xl shadow-md active:scale-95 transition-all">
                   Sign In
