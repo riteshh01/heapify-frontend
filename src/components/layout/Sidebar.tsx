@@ -148,7 +148,7 @@ const DSASidebar: React.FC<SidebarProps> = ({
             { label: "OS", href: "/learning/os", icon: <FiCpu size={14} /> },
             { label: "Networks (CN)", href: "/learning/networks", icon: <FiWifi size={14} /> },
             { label: "DBMS", href: "/learning/dbms", icon: <FiDatabase size={14} /> },
-            { label: "Git", href: "/learning/git", icon: <FiGitBranch size={14} /> },
+            // { label: "Git", href: "/learning/git", icon: <FiGitBranch size={14} /> },
             { label: "Dashboard", href: "/dashboard", icon: <FiBookOpen size={14} /> },
           ].map((item) => (
             <Link

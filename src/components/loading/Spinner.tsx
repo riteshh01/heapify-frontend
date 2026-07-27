@@ -244,84 +244,13 @@ export function DSAFullLoader() {
           </div>
 
           {/* Dashboard content */}
-          <div className="flex-1 overflow-hidden px-6 py-8 md:px-8 md:py-10 max-w-5xl mx-auto w-full">
-            {/* "DSA Progress Tracker" title + subtitle */}
-            <div className="mb-8 pb-6 border-b border-[#d1e8d8] dark:border-[#30363d] space-y-2">
-              <Bone className="h-9 w-72 rounded-xl" />
-              <Bone className="h-4 w-96 rounded-lg" />
-            </div>
-
-            {/* Progress card: arc chart (left) + difficulty bars (right) */}
-            <div
-              className="bg-white dark:bg-[#21262d] border border-[#d1e8d8]
-                         dark:border-[#30363d] rounded-3xl shadow-sm p-8"
-            >
-              <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14">
-                {/* ── Arc chart skeleton (220×220) ── */}
-                <div className="shrink-0 relative">
-                  {/* Outer ring */}
-                  <Bone className="h-[180px] w-[180px] md:h-[220px] md:w-[220px] rounded-full" />
-                  {/* Inner white circle to fake donut hole */}
-                  <div
-                    className="absolute inset-0 m-auto h-[110px] w-[110px] md:h-[140px] md:w-[140px] rounded-full
-                               bg-white dark:bg-[#21262d]"
-                  />
-                  {/* Centre text lines */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                    <Bone className="h-7 w-10 md:h-9 md:w-14 rounded-lg" />
-                    <Bone className="h-2 w-10 md:h-3 md:w-12 rounded" />
-                    <Bone className="h-2 w-8 md:h-3 md:w-10 rounded" />
-                  </div>
-                </div>
-
-                {/* ── Difficulty bars skeleton ── */}
-                <div className="flex-1 w-full max-w-sm space-y-5">
-                  {/* Easy */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Bone className="h-3 w-10 rounded" />
-                      <div className="flex items-center gap-2">
-                        <Bone className="h-5 w-14 rounded-lg" />
-                        <Bone className="h-3 w-8 rounded" />
-                      </div>
-                    </div>
-                    <Bone className="h-2.5 w-full rounded-full" />
-                  </div>
-                  {/* Medium */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Bone className="h-3 w-14 rounded" />
-                      <div className="flex items-center gap-2">
-                        <Bone className="h-5 w-14 rounded-lg" />
-                        <Bone className="h-3 w-8 rounded" />
-                      </div>
-                    </div>
-                    <Bone className="h-2.5 w-full rounded-full" />
-                  </div>
-                  {/* Hard */}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Bone className="h-3 w-8 rounded" />
-                      <div className="flex items-center gap-2">
-                        <Bone className="h-5 w-14 rounded-lg" />
-                        <Bone className="h-3 w-8 rounded" />
-                      </div>
-                    </div>
-                    <Bone className="h-2.5 w-full rounded-full" />
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="pt-4 border-t border-[#d1e8d8] dark:border-[#30363d] grid grid-cols-2 gap-3">
-                    <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-2xl p-4 border border-[#d1e8d8] dark:border-[#30363d] space-y-2">
-                      <Bone className="h-2.5 w-20 rounded" />
-                      <Bone className="h-8 w-12 rounded-lg" />
-                    </div>
-                    <div className="bg-[#f4fcf7] dark:bg-[#0d1117] rounded-2xl p-4 border border-[#d1e8d8] dark:border-[#30363d] space-y-2">
-                      <Bone className="h-2.5 w-24 rounded" />
-                      <Bone className="h-8 w-12 rounded-lg" />
-                    </div>
-                  </div>
-                </div>
+          <div className="flex-1 overflow-hidden px-4 py-6 sm:px-6 sm:py-8 md:px-8 md:py-10 max-w-5xl mx-auto w-full flex flex-col items-center justify-center">
+            <div className="flex flex-col items-center justify-center h-[50vh] text-center w-full max-w-md">
+              <Bone className="w-16 h-16 rounded-2xl mb-6" />
+              <Bone className="h-8 w-48 rounded-xl mb-3" />
+              <div className="flex flex-col items-center gap-2 w-full">
+                <Bone className="h-4 w-full rounded" />
+                <Bone className="h-4 w-3/4 rounded" />
               </div>
             </div>
           </div>

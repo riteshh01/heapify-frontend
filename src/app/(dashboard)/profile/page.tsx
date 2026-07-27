@@ -1,18 +1,27 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useAuthContext } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { apiCall } from "@/services/api";
 import Image from "next/image";
-import { FiUpload, FiTrash2, FiUser, FiMail, FiCalendar } from "react-icons/fi";
+import { FiUpload, FiTrash2, FiUser, FiMail, FiCalendar, FiEdit2, FiCheck, FiX } from "react-icons/fi";
 
 export default function ProfilePage() {
   const { user, getUserData } = useAuthContext();
   const { notify } = useNotification();
   const [isUploading, setIsUploading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      setNameInput(user.name);
+    }
+  }, [user]);
 
   if (!user) {
     return (
@@ -83,6 +92,38 @@ export default function ProfilePage() {
       notify("An error occurred while deleting", { type: "error" });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!nameInput.trim()) {
+      notify("Name cannot be empty", { type: "error" });
+      return;
+    }
+    if (nameInput.trim() === user.name) {
+      setIsEditingName(false);
+      return;
+    }
+    
+    setIsSavingName(true);
+    try {
+      const data = await apiCall<{ success: boolean; message?: string }>("/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify({ name: nameInput.trim() }),
+      });
+
+      if (data.success) {
+        notify("Name updated successfully!", { type: "success" });
+        await getUserData(); // Refresh user context
+        setIsEditingName(false);
+      } else {
+        notify(data.message || "Failed to update name", { type: "error" });
+      }
+    } catch (error) {
+      console.error("Update name error:", error);
+      notify("An error occurred while updating name", { type: "error" });
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -162,12 +203,33 @@ export default function ProfilePage() {
           <div className="flex-1 w-full space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                  <FiUser size={16} /> Full Name
+                <label className="text-sm font-semibold text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-2"><FiUser size={16} /> Full Name</span>
+                  {!isEditingName && (
+                    <button onClick={() => setIsEditingName(true)} className="text-emerald-600 dark:text-emerald-400 hover:underline text-xs font-bold flex items-center gap-1"><FiEdit2 size={12}/> Edit</button>
+                  )}
                 </label>
-                <div className="px-4 py-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-medium">
-                  {user.name}
-                </div>
+                {isEditingName ? (
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="text" 
+                      value={nameInput} 
+                      onChange={(e) => setNameInput(e.target.value)} 
+                      className="flex-1 min-w-0 px-3 py-2 bg-white dark:bg-[#161b22] rounded-xl border border-emerald-500 text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                      disabled={isSavingName}
+                    />
+                    <button onClick={handleSaveName} disabled={isSavingName} className="flex-shrink-0 p-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors disabled:opacity-50">
+                      <FiCheck size={16} />
+                    </button>
+                    <button onClick={() => { setIsEditingName(false); setNameInput(user.name); }} disabled={isSavingName} className="flex-shrink-0 p-2 bg-slate-200 dark:bg-[#21262d] text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 border border-slate-300 dark:border-[#30363d]">
+                      <FiX size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-medium">
+                    {user.name}
+                  </div>
+                )}
               </div>
               
               <div className="space-y-2">
@@ -185,7 +247,9 @@ export default function ProfilePage() {
                 <FiCalendar size={16} /> Member Since
               </label>
               <div className="px-4 py-3 bg-slate-50 dark:bg-[#0d1117] rounded-xl border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-medium">
-                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                {user.createdAt || (user as any).created_at 
+                  ? new Date(user.createdAt || (user as any).created_at).toLocaleDateString() 
+                  : 'N/A'}
               </div>
             </div>
           </div>

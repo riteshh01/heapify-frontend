@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import { Navbar } from "@/components/layout/Navbar";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { useAuthContext } from "@/context/AuthContext";
 // AvatarGroup import kar lena jahan bhi tumne file save ki hai
 import AvatarGroup from "@/components/ui/AvatarGroup"; 
 
@@ -42,13 +45,28 @@ const topics = [
 ];
 
 export default function Home() {
+  const { isLoggedIn, isLoading } = useAuthContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isLoggedIn) {
+      router.push("/dashboard");
+    }
+  }, [isLoggedIn, isLoading, router]);
+
+  if (isLoading || isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#f4fbf6] dark:bg-[#161b22] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-screen flex-col bg-[#f4fbf6] dark:bg-[#161b22] text-[#2d3748] dark:text-[#c9d1d9] font-sans selection:bg-emerald-500/30 transition-colors duration-300 overflow-hidden">
       
       {/* Shared Navbar */}
-      <div className="relative z-50 bg-[#f4fbf6]/80 dark:bg-[#161b22]/80 backdrop-blur-md border-b border-[#e2e8f0] dark:border-[#30363d] transition-colors duration-300">
-        <Navbar />
-      </div>
+      <Navbar />
 
       <main className="flex-1 flex flex-col w-full mx-auto">
         
@@ -141,10 +159,10 @@ export default function Home() {
         </section>
 
         {/* COMPANY-WISE PROBLEMS SECTION */}
-        <section className="w-full py-24 relative">
+        <section className="w-full py-12 md:py-24 relative">
           <div className="absolute inset-0 bg-white dark:bg-[#161b22] pointer-events-none" />
           <div className="max-w-6xl mx-auto px-6 relative z-10">
-            <div className="mb-14 text-center flex flex-col items-center">
+            <div className="mb-8 md:mb-14 text-center flex flex-col items-center">
               <h2 className="text-3xl sm:text-5xl font-extrabold text-[#1a202c] dark:text-[#c9d1d9] mb-4">Target Top Companies</h2>
               <div className="h-1.5 w-16 bg-blue-500 rounded-full mb-6"></div>
               <p className="text-lg text-[#4a5568] dark:text-[#8b949e] max-w-2xl font-medium">

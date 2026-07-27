@@ -16,7 +16,6 @@ import {
   fetchTopics,
   ProgressSummary,
 } from "@/services/knowledgeService";
-import { DSALoader } from "@/components/loading/Spinner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -266,6 +265,61 @@ function LeetCodeDifficultyArcChart({ stats }: { stats: LeetCodeStats }) {
   );
 }
 
+// ─── Skeletons ────────────────────────────────────────────────────────────────
+
+function StatsSkeleton() {
+  return (
+    <div className="flex flex-col md:flex-row items-center gap-8 md:gap-14 w-full animate-pulse justify-center">
+      {/* Circle Skeleton */}
+      <div className="relative shrink-0 flex justify-center w-full md:w-auto">
+        <div className="w-[200px] h-[200px] rounded-full border-[10px] border-slate-100 dark:border-slate-800/60 flex items-center justify-center shadow-sm">
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-16 h-8 bg-slate-200 dark:bg-slate-700/50 rounded-md"></div>
+            <div className="w-10 h-3 bg-slate-200 dark:bg-slate-700/50 rounded-md"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bars and Stats Skeleton */}
+      <div className="flex-1 space-y-5 w-full max-w-sm">
+        {[1, 2, 3].map((i) => (
+          <div key={i}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-14 h-3.5 bg-slate-200 dark:bg-slate-700/50 rounded-md"></div>
+              <div className="flex items-center gap-2">
+                <div className="w-12 h-4 bg-slate-200 dark:bg-slate-700/50 rounded-lg"></div>
+                <div className="w-6 h-3 bg-slate-200 dark:bg-slate-700/50 rounded-md"></div>
+              </div>
+            </div>
+            <div className="w-full h-2.5 bg-slate-100 dark:bg-slate-800/60 rounded-full"></div>
+          </div>
+        ))}
+
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-2 gap-3">
+          <div className="h-[72px] bg-slate-100 dark:bg-slate-800/60 rounded-2xl"></div>
+          <div className="h-[72px] bg-slate-100 dark:bg-slate-800/60 rounded-2xl"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TopicSkeleton() {
+  return (
+    <div className="w-full flex flex-col mt-8 animate-pulse">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+        <div className="w-32 h-5 bg-slate-200 dark:bg-slate-700/50 rounded-md"></div>
+        <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/60 p-1 rounded-xl self-start">
+          <div className="w-20 h-8 bg-slate-200 dark:bg-slate-700/50 rounded-lg"></div>
+          <div className="w-24 h-8 bg-slate-200 dark:bg-slate-700/50 rounded-lg"></div>
+          <div className="w-20 h-8 bg-slate-200 dark:bg-slate-700/50 rounded-lg"></div>
+        </div>
+      </div>
+      <div className="h-[380px] bg-slate-100 dark:bg-slate-800/60 rounded-2xl w-full"></div>
+    </div>
+  );
+}
+
 // ─── Main Stats Page ──────────────────────────────────────────────────────────
 
 export default function StatsPage() {
@@ -366,7 +420,8 @@ export default function StatsPage() {
           setLcProfile(profileData);
           localStorage.setItem("leetcode_profile", JSON.stringify(profileData));
 
-          const ac = matchedUser.submitStatsGlobal?.acSubmissionNum || [];
+          const ac = matchedUser.submitStats?.acSubmissionNum || [];
+          const total = matchedUser.submitStats?.totalSubmissionNum || [];
           const allQs = result?.data?.allQuestionsCount || [];
 
           const statsData = {
@@ -378,7 +433,7 @@ export default function StatsPage() {
             easyTotal: allQs.find((x: any) => x.difficulty === "Easy")?.count || 0,
             mediumTotal: allQs.find((x: any) => x.difficulty === "Medium")?.count || 0,
             hardTotal: allQs.find((x: any) => x.difficulty === "Hard")?.count || 0,
-            totalSubmissionNum: [],
+            totalSubmissionNum: total,
             acSubmissionNum: ac,
           };
           setLcStats(statsData);
@@ -453,9 +508,9 @@ export default function StatsPage() {
         <section className="bg-white dark:bg-[#21262d] border border-[#d1e8d8] dark:border-[#30363d] rounded-2xl sm:rounded-3xl shadow-sm p-5 sm:p-8">
           <div className="mb-6 border-b border-[#e2e8f0] dark:border-[#30363d] pb-4">
             <h2 className="text-lg sm:text-xl font-bold text-[#1a202c] dark:text-[#f0f6fc] tracking-tight flex items-center gap-2">
-              <span className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                H
-              </span>
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-600 text-sm font-bold tracking-tighter text-white shadow-md transition-transform duration-200 group-hover:scale-105 transform-gpu dark:bg-emerald-500">
+            H
+          </span>
               Heapify Progress
             </h2>
             <p className="text-sm text-[#4a5568] dark:text-[#8b949e] mt-1 ml-10">
@@ -464,7 +519,7 @@ export default function StatsPage() {
           </div>
           
           {localLoading ? (
-            <div className="py-10 flex justify-center"><DSALoader /></div>
+            <div className="py-8 w-full flex justify-center"><StatsSkeleton /></div>
           ) : (
             <DifficultyArcChart 
               progressSummary={progressSummary} 
@@ -545,9 +600,9 @@ export default function StatsPage() {
                 </button>
               </div>
             ) : lcLoading && !lcStats ? (
-              <div className="py-16 flex flex-col items-center justify-center text-amber-500">
-                <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-sm font-bold tracking-wide animate-pulse">Syncing with LeetCode...</p>
+              <div className="flex flex-col gap-6 w-full py-8">
+                <StatsSkeleton />
+                <TopicSkeleton />
               </div>
             ) : lcError && !lcStats ? (
               <div className="py-10 flex flex-col items-center justify-center text-rose-500">

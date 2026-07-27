@@ -709,7 +709,7 @@
     {
       "id": 142,
       "quote": "The question of whether machines can think is important, but the question of whether they can be made to think responsibly matters more.",
-      "author": "paraphrased common engineering sentiment, often attributed loosely in AI ethics discussions"
+      "author": "Donald Knuth"
     },
     {
       "id": 143,
@@ -1270,11 +1270,6 @@
       "id": 254,
       "quote": "To understand recursion, one must first understand recursion.",
       "author": "classic computer science aphorism, origin disputed"
-    },
-    {
-      "id": 255,
-      "quote": "If anyone finds a polynomial-time algorithm for even one NP-complete problem, that would imply a polynomial-time algorithm for every NP-complete problem.",
-      "author": "paraphrased core insight of Stephen Cook and Richard Karp's NP-completeness work"
     },
     {
       "id": 256,

@@ -9,7 +9,7 @@ export async function GET(req: Request) {
   }
 
   const query = `
-    query userStats($username: String!) {
+    query userProfileAndStats($username: String!) {
       allQuestionsCount {
         difficulty
         count
@@ -21,10 +21,16 @@ export async function GET(req: Request) {
           userAvatar
           ranking
         }
-        submitStatsGlobal {
+        submitStats {
           acSubmissionNum {
             difficulty
             count
+            submissions
+          }
+          totalSubmissionNum {
+            difficulty
+            count
+            submissions
           }
         }
         tagProblemCounts {
@@ -45,7 +51,7 @@ export async function GET(req: Request) {
       body: JSON.stringify({
         query,
         variables: { username },
-        operationName: "userStats",
+        operationName: "userProfileAndStats",
       }),
       next: { revalidate: 3600 },
     });

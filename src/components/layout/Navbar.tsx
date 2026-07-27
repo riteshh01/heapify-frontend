@@ -7,15 +7,16 @@ import { AuthContext } from "@/context/AuthContext";
 import { useNotification } from "@/context/NotificationContext";
 import { useTheme } from "@/context/ThemeContext";
 // FiX ko add kiya gaya hai close button ke liye
-import { FiSun, FiMoon, FiX } from "react-icons/fi"; 
+import { FiSun, FiMoon, FiX } from "react-icons/fi";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/auth";
 
 const SUBJECT_LINKS = [
+  { label: "Problems", href: "/dashboard" },
   { label: "Stats", href: "/stats" },
   { label: "DSA Sheet", href: "/learning/dsa_sheet" },
-  { label: "Git", href: "/learning/git" },
+  // { label: "Git", href: "/learning/git" },
 ];
 
 export function Navbar() {
@@ -105,8 +106,8 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className={`flex items-center gap-1.5 rounded-lg border px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${isActive
-                      ? "border-emerald-200 bg-emerald-100 text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                    ? "border-emerald-200 bg-emerald-100 text-emerald-700 shadow-sm dark:border-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
+                    : "border-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                     }`}
                 >
                   {link.label}
@@ -194,20 +195,18 @@ export function Navbar() {
       </div>
 
       {/* --- Mobile Sidebar Navigation --- */}
-      
+
       {/* Background Overlay (Clickable to close) */}
-      <div 
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300 md:hidden ${
-          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-        }`}
+      <div
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300 md:hidden ${mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+          }`}
         onClick={() => setMobileOpen(false)}
       />
 
       {/* Sliding Drawer */}
-      <div 
-        className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-[#161b22] z-[70] shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out md:hidden ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
+      <div
+        className={`fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-[#161b22] z-[70] shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out md:hidden ${mobileOpen ? "translate-x-0" : "translate-x-full"
+          }`}
       >
         {/* Drawer Header & Cross Button */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#e2e8f0] dark:border-[#30363d]">
