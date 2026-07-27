@@ -13,7 +13,7 @@ export function NotificationContainer() {
 
   return (
     <div
-      className="fixed top-4 right-4 z-50 space-y-3 w-full max-w-md pointer-events-none"
+      className="fixed top-4 right-4 z-[200] space-y-2 w-max max-w-[calc(100vw-2rem)] sm:max-w-sm pointer-events-none"
       aria-live="polite"
       aria-atomic="true"
     >
