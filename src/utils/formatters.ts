@@ -140,15 +140,16 @@ export function toTitleCase(text: string): string {
 /**
  * Convert difficulty level to badge color
  */
-export function getDifficultyColor(difficulty: "easy" | "medium" | "hard"): string {
-  switch (difficulty) {
+export function getDifficultyColor(difficulty: string): string {
+  const norm = (difficulty || "").toLowerCase();
+  switch (norm) {
     case "easy":
-      return "text-green-600";
+      return "text-emerald-600 dark:text-emerald-400";
     case "medium":
-      return "text-yellow-600";
+      return "text-amber-600 dark:text-amber-400";
     case "hard":
-      return "text-red-600";
+      return "text-rose-600 dark:text-rose-400";
     default:
-      return "text-gray-600";
+      return "text-gray-600 dark:text-gray-400";
   }
 }

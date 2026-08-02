@@ -441,9 +441,9 @@ export default function ProgressPage() {
                 <div className="flex items-center gap-3 shrink-0">
                   <span
                     className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                      item.difficulty === "easy"
+                      (item.difficulty || "").toLowerCase() === "easy"
                         ? "bg-emerald-100/80 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
-                        : item.difficulty === "medium"
+                        : (item.difficulty || "").toLowerCase() === "medium"
                         ? "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
                         : "bg-rose-100/80 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800"
                     }`}

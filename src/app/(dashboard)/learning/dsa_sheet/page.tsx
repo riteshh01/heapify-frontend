@@ -401,9 +401,9 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
               {prob.title}
             </a>
             <span
-              className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border w-max ${prob.difficulty === "easy"
+              className={`text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide shrink-0 border w-max ${(prob.difficulty || "").toLowerCase() === "easy"
                   ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
-                  : prob.difficulty === "medium"
+                  : (prob.difficulty || "").toLowerCase() === "medium"
                     ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
                     : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
                 }`}

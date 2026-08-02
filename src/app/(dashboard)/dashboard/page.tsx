@@ -56,10 +56,11 @@ const LIMIT = 15;
 // ─── Difficulty badge helper ───────────────────────────────────────────────────
 
 function DiffBadge({ d }: { d: string }) {
+  const norm = (d || "").toLowerCase();
   const cls =
-    d === "easy"
+    norm === "easy"
       ? "bg-emerald-100/80 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
-      : d === "medium"
+      : norm === "medium"
       ? "bg-amber-100/80 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
       : "bg-rose-100/80 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50";
   return (
