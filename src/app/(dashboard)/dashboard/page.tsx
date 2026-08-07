@@ -32,6 +32,8 @@ import {
   FiFilter,
   FiTag,
   FiLoader,
+  FiBriefcase,
+  FiLayers,
 } from "react-icons/fi";
 import { HiOfficeBuilding } from "react-icons/hi";
 import quotesData from "@/data/quote.json";
@@ -111,54 +113,75 @@ function SearchableSelect({
     <div ref={ref} className="relative">
       <button
         onClick={() => { setOpen(!open); setQ(""); }}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-w-[130px] ${
+        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all shrink-0 sm:shrink min-w-0 sm:min-w-[120px] ${
           value
             ? "border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300"
             : "border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-emerald-400 dark:hover:border-emerald-600"
         }`}
       >
         {icon && <span className="shrink-0">{icon}</span>}
-        <span className="truncate max-w-[110px]">{selectedLabel || placeholder}</span>
+        <span className="truncate max-w-[70px] xs:max-w-[85px] sm:max-w-[110px]">{selectedLabel || placeholder}</span>
         {value ? (
           <FiX
-            size={12}
+            size={11}
             className="shrink-0 ml-auto"
             onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
           />
         ) : (
-          <FiChevronDown size={12} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+          <FiChevronDown size={11} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
         )}
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 w-56 bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-xl overflow-hidden">
-          <div className="p-2 border-b border-[#e2e8f0] dark:border-[#30363d]">
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search..."
-              className="w-full text-xs px-3 py-1.5 rounded-lg bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none"
-            />
-          </div>
-          <div className="max-h-52 overflow-y-auto [scrollbar-width:thin]">
-            {filtered.length === 0 ? (
-              <p className="text-xs text-[#a0aec0] p-3 text-center">No results</p>
-            ) : (
-              filtered.map((o) => (
-                <button
-                  key={o.value}
-                  onClick={() => { onChange(o.value); setOpen(false); setQ(""); }}
-                  className={`w-full text-left px-3 py-2 text-xs font-medium transition-colors ${
-                    o.value === value
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                      : "text-[#1a202c] dark:text-[#e2e8f0] hover:bg-[#f4f6f8] dark:hover:bg-[#0d1117]"
-                  }`}
-                >
-                  {o.label}
-                </button>
-              ))
-            )}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} />
+          <div className="relative w-full max-w-xs bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-2xl p-4 z-10 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#e2e8f0] dark:border-[#30363d]">
+              <div className="flex items-center gap-2">
+                {icon && <span className="text-emerald-500">{icon}</span>}
+                <span className="text-xs font-bold text-[#1a202c] dark:text-[#f0f6fc]">
+                  Select {placeholder}
+                </span>
+              </div>
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg text-[#a0aec0] hover:text-[#1a202c] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#30363d] transition-colors"
+                aria-label="Close"
+              >
+                <FiX size={15} />
+              </button>
+            </div>
+
+            <div className="relative mb-3">
+              <FiSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search..."
+                className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-emerald-400 dark:focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="max-h-56 overflow-y-auto [scrollbar-width:thin]">
+              {filtered.length === 0 ? (
+                <p className="text-xs text-[#a0aec0] p-3 text-center">No results</p>
+              ) : (
+                filtered.map((o) => (
+                  <button
+                    key={o.value}
+                    onClick={() => { onChange(o.value); setOpen(false); setQ(""); }}
+                    className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium mb-1 transition-colors ${
+                      o.value === value
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 font-bold"
+                        : "text-[#1a202c] dark:text-[#e2e8f0] hover:bg-[#f4f6f8] dark:hover:bg-[#0d1117]"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -166,7 +189,7 @@ function SearchableSelect({
   );
 }
 
-// ─── Company Specific Select (Capsule UI) ──────────────────────────────────
+// ─── Company Specific Select (Capsule UI Modal) ──────────────────────────────────
 
 function CompanySelect({
   value,
@@ -199,79 +222,98 @@ function CompanySelect({
     <div ref={ref} className="relative">
       <button
         onClick={() => { setOpen(!open); setQ(""); }}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-w-[130px] ${
+        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all shrink-0 sm:shrink min-w-0 sm:min-w-[120px] ${
           value
             ? "border-blue-400 bg-blue-50 text-blue-700 dark:border-blue-600 dark:bg-blue-900/30 dark:text-blue-300"
             : "border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-blue-400 dark:hover:border-blue-600"
         }`}
       >
-        <HiOfficeBuilding size={11} className="shrink-0" />
-        <span className="truncate max-w-[110px]">
+        <FiBriefcase size={12} className="shrink-0 text-blue-500" />
+        <span className="truncate max-w-[70px] xs:max-w-[85px] sm:max-w-[110px]">
           {selectedCompany ? selectedCompany.name : "Company"}
         </span>
         {value ? (
           <FiX
-            size={12}
+            size={11}
             className="shrink-0 ml-auto"
             onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
           />
         ) : (
-          <FiChevronDown size={12} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+          <FiChevronDown size={11} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
         )}
       </button>
 
       {open && (
-        <div className="absolute -left-16 sm:-left-32 top-full mt-1.5 z-50 w-[300px] sm:w-[450px] bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-xl p-4 overflow-hidden">
-          <div className="relative mb-4">
-            <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search companies..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
-            />
-          </div>
-
-          <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] pr-1">
-            {filtered.length === 0 ? (
-              <p className="text-xs text-[#a0aec0] text-center py-4">No companies found.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2 p-1">
-                <button
-                  onClick={() => { onChange(""); setOpen(false); setQ(""); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
-                    value === ""
-                      ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
-                      : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
-                  }`}
-                >
-                  All Companies
-                </button>
-
-                {filtered.map((c) => {
-                  const isActive = value === c.slug;
-                  return (
-                    <button
-                      key={c.slug}
-                      onClick={() => { onChange(c.slug); setOpen(false); setQ(""); }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
-                        isActive
-                          ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 shadow-sm"
-                          : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400"
-                      }`}
-                    >
-                      {c.logo_url ? (
-                        <img src={c.logo_url} alt="" className="w-4 h-4 object-contain rounded-sm bg-white" />
-                      ) : (
-                        <HiOfficeBuilding size={12} className="opacity-50" />
-                      )}
-                      {c.name}
-                    </button>
-                  );
-                })}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} />
+          <div className="relative w-full max-w-md sm:max-w-lg bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-2xl p-4 sm:p-5 z-10 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#e2e8f0] dark:border-[#30363d]">
+              <div className="flex items-center gap-2">
+                <FiBriefcase size={15} className="text-blue-500" />
+                <span className="text-xs font-bold text-[#1a202c] dark:text-[#f0f6fc]">
+                  Select Company
+                </span>
               </div>
-            )}
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg text-[#a0aec0] hover:text-[#1a202c] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#30363d] transition-colors"
+                aria-label="Close"
+              >
+                <FiX size={15} />
+              </button>
+            </div>
+
+            <div className="relative mb-3">
+              <FiSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search companies..."
+                className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-blue-400 dark:focus:border-blue-500 transition-colors"
+              />
+            </div>
+
+            <div className="max-h-60 sm:max-h-72 overflow-y-auto [scrollbar-width:thin] pr-1 flex-1">
+              {filtered.length === 0 ? (
+                <p className="text-xs text-[#a0aec0] text-center py-6">No companies found.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 p-0.5">
+                  <button
+                    onClick={() => { onChange(""); setOpen(false); setQ(""); }}
+                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all ${
+                      value === ""
+                        ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50"
+                        : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
+                    }`}
+                  >
+                    All Companies
+                  </button>
+
+                  {filtered.map((c) => {
+                    const isActive = value === c.slug;
+                    return (
+                      <button
+                        key={c.slug}
+                        onClick={() => { onChange(c.slug); setOpen(false); setQ(""); }}
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                          isActive
+                            ? "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700/50 shadow-sm"
+                            : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-blue-900/20 dark:hover:border-blue-700/50 dark:hover:text-blue-400"
+                        }`}
+                      >
+                        {c.logo_url ? (
+                          <img src={c.logo_url} alt="" className="w-3.5 h-3.5 sm:w-4 sm:h-4 object-contain rounded-sm bg-white" />
+                        ) : (
+                          <FiBriefcase size={11} className="opacity-50" />
+                        )}
+                        {c.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -279,7 +321,7 @@ function CompanySelect({
   );
 }
 
-// ─── Topic Specific Select (Capsule UI) ────────────────────────────────────
+// ─── Topic Specific Select (Capsule UI Modal) ────────────────────────────────────
 
 function TopicSelect({
   value,
@@ -312,75 +354,94 @@ function TopicSelect({
     <div ref={ref} className="relative">
       <button
         onClick={() => { setOpen(!open); setQ(""); }}
-        className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all min-w-[130px] ${
+        className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all shrink-0 sm:shrink min-w-0 sm:min-w-[120px] ${
           value
             ? "border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-600 dark:bg-orange-900/30 dark:text-orange-300"
             : "border-[#e2e8f0] dark:border-[#30363d] bg-white dark:bg-[#21262d] text-[#4a5568] dark:text-[#8b949e] hover:border-orange-400 dark:hover:border-orange-600"
         }`}
       >
-        <FiTag size={11} className="shrink-0" />
-        <span className="truncate max-w-[110px]">
+        <FiLayers size={12} className="shrink-0 text-orange-500" />
+        <span className="truncate max-w-[70px] xs:max-w-[85px] sm:max-w-[110px]">
           {selectedTag ? selectedTag.name : "Topic"}
         </span>
         {value ? (
           <FiX
-            size={12}
+            size={11}
             className="shrink-0 ml-auto"
             onClick={(e) => { e.stopPropagation(); onChange(""); setOpen(false); }}
           />
         ) : (
-          <FiChevronDown size={12} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
+          <FiChevronDown size={11} className={`shrink-0 ml-auto transition-transform ${open ? "rotate-180" : ""}`} />
         )}
       </button>
 
       {open && (
-        <div className="absolute -left-16 sm:-left-32 top-full mt-1.5 z-50 w-[300px] sm:w-[450px] bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-xl p-4 overflow-hidden">
-          <div className="relative mb-4">
-            <FiSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search topics..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-orange-400 dark:focus:border-orange-500 transition-colors"
-            />
-          </div>
-
-          <div className="max-h-64 overflow-y-auto [scrollbar-width:thin] pr-1">
-            {filtered.length === 0 ? (
-              <p className="text-xs text-[#a0aec0] text-center py-4">No topics found.</p>
-            ) : (
-              <div className="flex flex-wrap gap-2 p-1">
-                <button
-                  onClick={() => { onChange(""); setOpen(false); setQ(""); }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all ${
-                    value === ""
-                      ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
-                      : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
-                  }`}
-                >
-                  All Topics
-                </button>
-
-                {filtered.map((t) => {
-                  const isActive = value === t.slug;
-                  return (
-                    <button
-                      key={t.slug}
-                      onClick={() => { onChange(t.slug); setOpen(false); setQ(""); }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
-                        isActive
-                          ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 shadow-sm"
-                          : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:border-orange-700/50 dark:hover:text-orange-400"
-                      }`}
-                    >
-                      <FiTag size={10} className="opacity-70" />
-                      {t.name}
-                    </button>
-                  );
-                })}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="absolute inset-0" onClick={() => setOpen(false)} />
+          <div className="relative w-full max-w-md sm:max-w-lg bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl shadow-2xl p-4 sm:p-5 z-10 flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between pb-2.5 mb-3 border-b border-[#e2e8f0] dark:border-[#30363d]">
+              <div className="flex items-center gap-2">
+                <FiLayers size={15} className="text-orange-500" />
+                <span className="text-xs font-bold text-[#1a202c] dark:text-[#f0f6fc]">
+                  Select Topic
+                </span>
               </div>
-            )}
+              <button
+                onClick={() => setOpen(false)}
+                className="p-1.5 rounded-lg text-[#a0aec0] hover:text-[#1a202c] dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#30363d] transition-colors"
+                aria-label="Close"
+              >
+                <FiX size={15} />
+              </button>
+            </div>
+
+            <div className="relative mb-3">
+              <FiSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search topics..."
+                className="w-full pl-8 pr-3 py-2 rounded-xl bg-[#f4f6f8] dark:bg-[#0d1117] border border-[#e2e8f0] dark:border-[#30363d] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-orange-400 dark:focus:border-orange-500 transition-colors"
+              />
+            </div>
+
+            <div className="max-h-60 sm:max-h-72 overflow-y-auto [scrollbar-width:thin] pr-1 flex-1">
+              {filtered.length === 0 ? (
+                <p className="text-xs text-[#a0aec0] text-center py-6">No topics found.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5 sm:gap-2 p-0.5">
+                  <button
+                    onClick={() => { onChange(""); setOpen(false); setQ(""); }}
+                    className={`flex items-center gap-1 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all ${
+                      value === ""
+                        ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50"
+                        : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-[#f4f6f8] dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-[#30363d]"
+                    }`}
+                  >
+                    All Topics
+                  </button>
+
+                  {filtered.map((t) => {
+                    const isActive = value === t.slug;
+                    return (
+                      <button
+                        key={t.slug}
+                        onClick={() => { onChange(t.slug); setOpen(false); setQ(""); }}
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-[11px] font-bold border transition-all hover:scale-105 active:scale-95 ${
+                          isActive
+                            ? "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700/50 shadow-sm"
+                            : "bg-white text-[#4a5568] border-[#e2e8f0] hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-orange-900/20 dark:hover:border-orange-700/50 dark:hover:text-orange-400"
+                        }`}
+                      >
+                        <FiLayers size={10} className="opacity-70" />
+                        {t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -855,16 +916,16 @@ export default function DashboardPage() {
           </div>
 
           {/* Filter bar */}
-          <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl p-3 sm:p-4 mb-4 shadow-sm">
-            <div className="flex flex-wrap gap-2 items-center">
+          <div className="bg-white dark:bg-[#21262d] border border-[#e2e8f0] dark:border-[#30363d] rounded-2xl p-2.5 sm:p-4 mb-4 shadow-sm">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2 items-center">
               {/* Search */}
-              <div className="relative flex-1 min-w-[180px]">
+              <div className="relative flex-1 min-w-[130px] sm:min-w-[180px]">
                 <FiSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#a0aec0] dark:text-[#4b5563]" />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search problems…"
-                  className="w-full pl-8 pr-3 py-2 rounded-xl border border-[#e2e8f0] dark:border-[#30363d] bg-[#f8fafc] dark:bg-[#0d1117] text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-emerald-400 dark:focus:border-emerald-600 transition-colors"
+                  className="w-full pl-8 pr-3 py-1.5 sm:py-2 rounded-xl border border-[#e2e8f0] dark:border-[#30363d] bg-[#f8fafc] dark:bg-[#0d1117] text-[11px] sm:text-xs font-medium text-[#1a202c] dark:text-[#f0f6fc] placeholder-[#a0aec0] dark:placeholder-[#4b5563] outline-none focus:border-emerald-400 dark:focus:border-emerald-600 transition-colors"
                 />
                 {search && (
                   <button
@@ -912,7 +973,7 @@ export default function DashboardPage() {
               {activeFilters > 0 && (
                 <button
                   onClick={clearAll}
-                  className="flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors"
+                  className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl text-[11px] sm:text-xs font-bold text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/50 bg-rose-50 dark:bg-rose-900/20 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors shrink-0"
                 >
                   <FiX size={11} /> Clear ({activeFilters})
                 </button>
