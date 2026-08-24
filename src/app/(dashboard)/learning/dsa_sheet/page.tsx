@@ -47,7 +47,180 @@ interface PatternDetailViewProps {
   onToggle: (problemId: string | number) => void;
 }
 
-type ExpandSection = "notes" | "companies" | "topic";
+type ExpandSection = "companies" | "topic";
+
+// ─── Notes Modal Component ───────────────────────────────────────────────────
+
+interface NotesModalProps {
+  prob: KnowledgeProblem | null;
+  isOpen: boolean;
+  onClose: () => void;
+  noteValue: string;
+  isNoteLoading: boolean;
+  isSavingNote: boolean;
+  noteSaved: boolean;
+  onNoteChange: (probId: string | number, value: string) => void;
+  onSaveNote: (probId: string | number) => void;
+}
+
+const NotesModal: React.FC<NotesModalProps> = ({
+  prob,
+  isOpen,
+  onClose,
+  noteValue,
+  isNoteLoading,
+  isSavingNote,
+  noteSaved,
+  onNoteChange,
+  onSaveNote,
+}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isOpen || !prob) return;
+      if (e.key === "Escape") {
+        onClose();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        onSaveNote(prob.id);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, prob, onSaveNote, onClose]);
+
+  if (!isOpen || !prob) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/60 dark:bg-black/80 backdrop-blur-md transition-all duration-300 animate-in fade-in">
+      {/* Backdrop click listener */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      <div className="relative w-full max-w-3xl bg-white dark:bg-[#161b22] border border-violet-200/80 dark:border-violet-900/40 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] sm:max-h-[80vh] z-10 transition-colors duration-300">
+        {/* Modal Header */}
+        <div className="px-5 py-4 sm:px-6 sm:py-5 border-b border-[#e8f5ee] dark:border-[#30363d] bg-[#fcfdfe] dark:bg-[#1c2228] flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 shrink-0 border border-violet-200 dark:border-violet-800/40">
+              <FiEdit3 size={18} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] sm:text-xs font-extrabold uppercase tracking-wider text-violet-700 dark:text-violet-400">
+                  Problem Notes
+                </span>
+                <span
+                  className={`text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide border ${(prob.difficulty || "").toLowerCase() === "easy"
+                    ? "bg-emerald-100/80 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/50"
+                    : (prob.difficulty || "").toLowerCase() === "medium"
+                    ? "bg-amber-100/80 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800/50"
+                    : "bg-rose-100/80 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/50"
+                  }`}
+                >
+                  {prob.difficulty}
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-bold text-[#1a202c] dark:text-[#f0f6fc] truncate mt-0.5">
+                {prob.title}
+              </h3>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <a
+              href={prob.problemLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Open problem link"
+              className="p-2 rounded-xl text-[#6b7280] dark:text-[#8b949e] hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all border border-transparent hover:border-emerald-200 dark:hover:border-emerald-800/40"
+            >
+              <FiExternalLink size={16} />
+            </a>
+            {/* Cross Button */}
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl text-[#6b7280] dark:text-[#8b949e] hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 border border-transparent hover:border-rose-200 dark:hover:border-rose-800/40 transition-all duration-200 active:scale-95"
+              title="Close notes (Esc)"
+            >
+              <FiX size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Sub-bar: Status, Character Count & Keyboard Tips */}
+        <div className="px-5 py-2.5 sm:px-6 bg-[#f4fcf7] dark:bg-[#161b22] border-b border-[#e8f5ee] dark:border-[#30363d] flex items-center justify-between text-[11px] font-medium text-[#6b7280] dark:text-[#8b949e]">
+          <div className="flex items-center gap-2">
+            <span>Press <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-[#21262d] border border-gray-200 dark:border-gray-700 rounded shadow-xs">Ctrl+S</kbd> to save, <kbd className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-[#21262d] border border-gray-200 dark:border-gray-700 rounded shadow-xs">Esc</kbd> to close</span>
+          </div>
+          <span className={noteValue.length > 9000 ? "text-rose-500 font-bold" : "text-[#8b949e]"}>
+            {noteValue.length.toLocaleString()} / 10,000 chars
+          </span>
+        </div>
+
+        {/* Modal Body / Textarea */}
+        <div className="p-4 sm:p-6 flex-1 flex flex-col min-h-0 bg-white dark:bg-[#161b22]">
+          {isNoteLoading ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-3 flex-1">
+              <div className="w-8 h-8 border-3 border-violet-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm font-medium text-violet-600 dark:text-violet-400">Loading your notes…</span>
+            </div>
+          ) : (
+            <textarea
+              value={noteValue}
+              onChange={(e) => onNoteChange(prob.id, e.target.value)}
+              maxLength={10000}
+              autoFocus
+              placeholder="Write your personal notes, approach, time & space complexity, or edge cases here..."
+              className="w-full flex-1 min-h-[260px] sm:min-h-[340px] resize-y text-xs sm:text-sm font-mono text-[#2d3748] dark:text-[#e2e8f0] bg-[#fafbfc] dark:bg-[#0d1117] border border-violet-200 dark:border-violet-900/40 rounded-xl p-4 leading-relaxed placeholder-[#a0aec0] dark:placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:focus:ring-violet-500/50 focus:border-violet-400 dark:focus:border-violet-500 transition-all shadow-inner"
+            />
+          )}
+        </div>
+
+        {/* Modal Footer */}
+        <div className="px-5 py-4 sm:px-6 bg-[#fcfdfe] dark:bg-[#1c2228] border-t border-[#e8f5ee] dark:border-[#30363d] flex items-center justify-between gap-3">
+          <p className="text-[11px] text-[#6b7280] dark:text-[#8b949e] hidden sm:block italic">
+            Notes are saved automatically to your account.
+          </p>
+          <div className="flex items-center gap-3 ml-auto">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl border border-gray-200 dark:border-[#30363d] text-xs font-bold text-[#4a5568] dark:text-[#8b949e] hover:bg-gray-100 dark:hover:bg-[#21262d] transition-all duration-200 active:scale-95"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => onSaveNote(prob.id)}
+              disabled={isSavingNote || isNoteLoading}
+              className={`flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white transition-all duration-200 shadow-sm active:scale-95 ${
+                noteSaved
+                  ? "bg-emerald-600 dark:bg-emerald-500 hover:bg-emerald-700"
+                  : isSavingNote
+                  ? "bg-violet-400 dark:bg-violet-700 cursor-wait"
+                  : "bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700"
+              }`}
+            >
+              {noteSaved ? (
+                <>
+                  <FiCheck size={14} />
+                  Saved!
+                </>
+              ) : isSavingNote ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <FiSave size={14} />
+                  Save Note
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -320,8 +493,6 @@ const DSASheet: React.FC = () => {
   );
 };
 
-
-
 // ─── Expandable Problem Row ───────────────────────────────────────────────────
 
 interface ProblemRowProps {
@@ -332,15 +503,10 @@ interface ProblemRowProps {
   expandedRowId: string | number | null;
   expandedSection: ExpandSection | null;
   onExpand: (probId: string | number, section: ExpandSection) => void;
+  onOpenNotesModal: (prob: KnowledgeProblem) => void;
   tagsCache: Map<string | number, ProblemTag[]>;
   loadingTagIds: Set<string | number>;
-  // Per-user note state
-  noteValue: string;
-  isNoteLoading: boolean;
-  isSavingNote: boolean;
-  noteSaved: boolean;
-  onNoteChange: (probId: string | number, value: string) => void;
-  onSaveNote: (probId: string | number) => void;
+  hasNote?: boolean;
 }
 
 const ProblemRow: React.FC<ProblemRowProps> = ({
@@ -351,14 +517,10 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
   expandedRowId,
   expandedSection,
   onExpand,
+  onOpenNotesModal,
   tagsCache,
   loadingTagIds,
-  noteValue,
-  isNoteLoading,
-  isSavingNote,
-  noteSaved,
-  onNoteChange,
-  onSaveNote,
+  hasNote,
 }) => {
   const isExpanded = expandedRowId === prob.id;
   const tags = tagsCache.get(prob.id) ?? [];
@@ -415,18 +577,17 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
 
         {/* Right Side: Action buttons */}
         <div className="flex items-center gap-1.5 shrink-0 pl-10 sm:pl-12 lg:pl-0 flex-wrap">
-          {/* Notes button — always visible */}
+          {/* Notes button — opens Modal */}
           <button
-            onClick={() => onExpand(prob.id, "notes")}
-            className={`flex items-center gap-1 px-2 py-1 sm:px-2.5 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-              isExpanded && expandedSection === "notes"
-                ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-700/50"
-                : "bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
-            }`}
+            onClick={() => onOpenNotesModal(prob)}
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 bg-white text-[#6b7280] border-[#d1e8d8] hover:bg-violet-50 hover:text-violet-600 hover:border-violet-300 dark:bg-[#21262d] dark:text-[#8b949e] dark:border-[#30363d] dark:hover:bg-violet-900/20 dark:hover:text-violet-400 active:scale-95 shadow-xs"
+            title="Open problem notes modal"
           >
-            <FiEdit3 size={10} />
+            <FiEdit3 size={10} className="text-violet-600 dark:text-violet-400" />
             Notes
-            <FiChevronDown size={9} className={`transition-transform duration-200 ${isExpanded && expandedSection === "notes" ? "rotate-180" : ""}`} />
+            {hasNote && (
+              <span className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" title="Has saved note" />
+            )}
           </button>
 
           <button
@@ -468,59 +629,6 @@ const ProblemRow: React.FC<ProblemRowProps> = ({
       {/* Expandable detail panel */}
       <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? "max-h-[600px] opacity-100" : "max-h-0 opacity-0"}`}>
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 pt-1">
-          {expandedSection === "notes" && (
-            <div className="rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800/40 p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <FiEdit3 size={12} className="text-violet-600 dark:text-violet-400" />
-                  <span className="text-[10px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider">My Notes</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-[9px] font-medium transition-colors ${
-                    noteValue.length > 9000 ? "text-rose-500" : "text-[#a0aec0] dark:text-[#64748b]"
-                  }`}>
-                    {noteValue.length} / 10,000
-                  </span>
-                  <button
-                    onClick={() => onSaveNote(prob.id)}
-                    disabled={isSavingNote || isNoteLoading}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all duration-200 ${
-                      noteSaved
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700/50"
-                        : isSavingNote
-                        ? "bg-violet-50 text-violet-400 border-violet-200 dark:bg-violet-900/20 dark:text-violet-500 dark:border-violet-800/30 cursor-wait"
-                        : "bg-violet-600 text-white border-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 active:scale-95 shadow-sm"
-                    }`}
-                  >
-                    {noteSaved ? (
-                      <><FiCheck size={10} /> Saved!</>
-                    ) : isSavingNote ? (
-                      <><div className="w-2.5 h-2.5 border border-violet-400 border-t-transparent rounded-full animate-spin" /> Saving…</>
-                    ) : (
-                      <><FiSave size={10} /> Save</>  
-                    )}
-                  </button>
-                </div>
-              </div>
-              {isNoteLoading ? (
-                <div className="flex items-center gap-2 py-2 justify-center">
-                  <div className="w-4 h-4 border-2 border-violet-400 border-t-transparent rounded-full animate-spin" />
-                  <span className="text-xs text-violet-500 dark:text-violet-400">Loading note…</span>
-                </div>
-              ) : (
-                <textarea
-                  value={noteValue}
-                  onChange={(e) => onNoteChange(prob.id, e.target.value)}
-                  maxLength={10000}
-                  rows={5}
-                  placeholder="Write your notes, approach, or key insights here…"
-                  className="w-full resize-y text-xs sm:text-sm text-[#374151] dark:text-[#d1d5db] bg-white dark:bg-[#1c2630] border border-violet-200 dark:border-violet-800/50 rounded-lg p-3 leading-relaxed placeholder-[#a0aec0] dark:placeholder-[#64748b] focus:outline-none focus:ring-2 focus:ring-violet-400/50 dark:focus:ring-violet-600/50 focus:border-violet-400 dark:focus:border-violet-600 transition-all"
-                  style={{ minHeight: 100 }}
-                />
-              )}
-            </div>
-          )}
-
           {expandedSection === "companies" && (
             <div className="rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/40 p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-2 sm:mb-3">
@@ -593,6 +701,9 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   const [tagsCache, setTagsCache] = useState<Map<string | number, ProblemTag[]>>(new Map());
   const [loadingTagIds, setLoadingTagIds] = useState<Set<string | number>>(new Set());
 
+  // ── Notes Modal state ───────────────────────────────────────────────────────
+  const [noteModalProblem, setNoteModalProblem] = useState<KnowledgeProblem | null>(null);
+
   // ── Per-user notes state ───────────────────────────────────────────────────
   const [notesCache, setNotesCache] = useState<Map<string | number, string>>(new Map());
   const [loadingNoteIds, setLoadingNoteIds] = useState<Set<string | number>>(new Set());
@@ -604,12 +715,33 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
   useEffect(() => {
     setExpandedRowId(null);
     setExpandedSection(null);
+    setNoteModalProblem(null);
     // Clear note states when navigating away
     setNotesCache(new Map());
     setLoadingNoteIds(new Set());
     setSavingNoteIds(new Set());
     setSavedNoteIds(new Set());
   }, [activePattern?.id]);
+
+  const handleOpenNotesModal = async (prob: KnowledgeProblem) => {
+    setNoteModalProblem(prob);
+    if (!notesCache.has(prob.id)) {
+      setLoadingNoteIds((prev) => new Set(prev).add(prob.id));
+      try {
+        const note = await fetchUserNote(prob.id);
+        setNotesCache((prev) => new Map(prev).set(prob.id, note));
+      } catch (err) {
+        console.error("Failed to fetch note:", err);
+        setNotesCache((prev) => new Map(prev).set(prob.id, ""));
+      } finally {
+        setLoadingNoteIds((prev) => {
+          const s = new Set(prev);
+          s.delete(prob.id);
+          return s;
+        });
+      }
+    }
+  };
 
   const handleExpand = async (probId: string | number, section: ExpandSection) => {
     if (expandedRowId === probId && expandedSection === section) {
@@ -620,22 +752,6 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
 
     setExpandedRowId(probId);
     setExpandedSection(section);
-
-    // Fetch user note if opening notes section and not yet loaded
-    if (section === "notes" && !notesCache.has(probId)) {
-      setLoadingNoteIds((prev) => new Set(prev).add(probId));
-      try {
-        const note = await fetchUserNote(probId);
-        setNotesCache((prev) => new Map(prev).set(probId, note));
-      } catch (err) {
-        console.error("Failed to fetch note:", err);
-        setNotesCache((prev) => new Map(prev).set(probId, ""));
-      } finally {
-        setLoadingNoteIds((prev) => {
-          const s = new Set(prev); s.delete(probId); return s;
-        });
-      }
-    }
 
     if ((section === "companies" || section === "topic") && !tagsCache.has(probId)) {
       setLoadingTagIds((prev) => new Set(prev).add(probId));
@@ -732,29 +848,43 @@ const PatternDetailView: React.FC<PatternDetailViewProps> = ({
           </div>
         ) : (
           <div>
-            {problems.map((prob, idx) => (
-              <ProblemRow
-                key={prob.id}
-                prob={prob}
-                idx={idx}
-                isSolved={solvedProblems.has(prob.id)}
-                onToggle={onToggle}
-                expandedRowId={expandedRowId}
-                expandedSection={expandedSection}
-                onExpand={handleExpand}
-                tagsCache={tagsCache}
-                loadingTagIds={loadingTagIds}
-                noteValue={notesCache.get(prob.id) ?? ""}
-                isNoteLoading={loadingNoteIds.has(prob.id)}
-                isSavingNote={savingNoteIds.has(prob.id)}
-                noteSaved={savedNoteIds.has(prob.id)}
-                onNoteChange={handleNoteChange}
-                onSaveNote={handleSaveNote}
-              />
-            ))}
+            {problems.map((prob, idx) => {
+              const noteText = notesCache.get(prob.id);
+              const hasNote = Boolean(noteText && noteText.trim().length > 0);
+
+              return (
+                <ProblemRow
+                  key={prob.id}
+                  prob={prob}
+                  idx={idx}
+                  isSolved={solvedProblems.has(prob.id)}
+                  onToggle={onToggle}
+                  expandedRowId={expandedRowId}
+                  expandedSection={expandedSection}
+                  onExpand={handleExpand}
+                  onOpenNotesModal={handleOpenNotesModal}
+                  tagsCache={tagsCache}
+                  loadingTagIds={loadingTagIds}
+                  hasNote={hasNote}
+                />
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* Notes Modal */}
+      <NotesModal
+        prob={noteModalProblem}
+        isOpen={noteModalProblem !== null}
+        onClose={() => setNoteModalProblem(null)}
+        noteValue={noteModalProblem ? notesCache.get(noteModalProblem.id) ?? "" : ""}
+        isNoteLoading={noteModalProblem ? loadingNoteIds.has(noteModalProblem.id) : false}
+        isSavingNote={noteModalProblem ? savingNoteIds.has(noteModalProblem.id) : false}
+        noteSaved={noteModalProblem ? savedNoteIds.has(noteModalProblem.id) : false}
+        onNoteChange={handleNoteChange}
+        onSaveNote={handleSaveNote}
+      />
     </div>
   );
 };
